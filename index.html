@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Gestão de Lotes Zinco v2.5</title>
+    <title>Gamil | Zinco v2.6 Anti-Duplicidade</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -14,8 +14,12 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .tab-active { border-bottom: 4px solid #3b82f6; color: #1e40af; font-weight: 800; }
-        .btn-action { transition: all 0.2s; }
-        .btn-action:hover { transform: scale(1.05); }
+        .error-shake { animation: shake 0.4s; border: 2px solid #ef4444 !important; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -23,8 +27,8 @@
     <header class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-black tracking-tighter text-blue-400">GAMIL <span class="text-white">ZINCO</span></h1>
-            <div class="text-[10px] font-bold bg-slate-800 px-3 py-1 rounded-full border border-slate-700 uppercase italic text-blue-300">
-                Sistema de Segurança Ativo
+            <div class="flex gap-2">
+                <span class="text-[10px] font-bold bg-rose-900/50 text-rose-300 px-3 py-1 rounded-full border border-rose-700 uppercase">Anti-Duplicidade</span>
             </div>
         </div>
     </header>
@@ -40,13 +44,14 @@
     <main class="container mx-auto px-4 py-6 max-w-4xl">
 
         <section id="sec-entrada" class="space-y-4">
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
-                <h3 class="text-sm font-black mb-4 uppercase text-slate-500 tracking-widest">Registo de Entrada</h3>
+            <div id="card-entrada" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 transition-all">
+                <h3 class="text-xs font-black mb-4 uppercase text-slate-500 tracking-widest">Entrada de Material</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase focus:ring-2 ring-blue-500 outline-none" placeholder="ID DO LOTE">
-                    <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold focus:ring-2 ring-blue-500 outline-none" placeholder="PESO (KG)">
-                    <button onclick="salvarEntrada()" class="bg-blue-600 text-white font-bold rounded-xl py-3 btn-action uppercase shadow-lg shadow-blue-200">Adicionar</button>
+                    <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="ID DO LOTE">
+                    <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 ring-blue-500" placeholder="PESO (KG)">
+                    <button onclick="salvarEntrada()" class="bg-blue-600 text-white font-bold rounded-xl py-3 uppercase shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Adicionar</button>
                 </div>
+                <div id="entrada-error" class="hidden mt-3 text-rose-600 text-xs font-bold uppercase animate-bounce">⚠️ Este Lote já existe no sistema!</div>
             </div>
             
             <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200">
@@ -65,10 +70,9 @@
 
         <section id="sec-picagem" class="hidden space-y-4">
             <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border-b-4 border-blue-500">
-                <input type="text" id="pda-scan" class="w-full p-4 text-3xl text-center font-black bg-white rounded-xl outline-none uppercase placeholder:text-slate-200" placeholder="SCANNER">
-                <div id="pda-feedback" class="hidden mt-4 p-4 rounded-xl text-center font-bold text-lg animate-pulse"></div>
+                <input type="text" id="pda-scan" class="w-full p-4 text-3xl text-center font-black bg-white rounded-xl outline-none uppercase" placeholder="SCANNER">
+                <div id="pda-feedback" class="hidden mt-4 p-4 rounded-xl text-center font-bold text-lg"></div>
             </div>
-            
             <div id="lista-picagem" class="space-y-3"></div>
         </section>
 
@@ -78,7 +82,7 @@
                     <input type="date" id="filtro-inicio" class="p-3 border rounded-xl bg-slate-50 font-bold">
                     <input type="date" id="filtro-fim" class="p-3 border rounded-xl bg-slate-50 font-bold">
                 </div>
-                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase hover:bg-black btn-action">📄 Exportar PDF Mensal</button>
+                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase hover:bg-black transition-all">📄 Exportar PDF</button>
             </div>
         </section>
 
@@ -86,7 +90,6 @@
 
     <script>
         const SENHA_MESTRA = "gamil2026";
-
         const firebaseConfig = {
             apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
             authDomain: "lotezinco.firebaseapp.com",
@@ -113,31 +116,33 @@
         }
 
         async function salvarEntrada() {
-            const lote = document.getElementById('in-lote').value.trim().toUpperCase();
+            const idInput = document.getElementById('in-lote');
+            const lote = idInput.value.trim().toUpperCase();
             const peso = document.getElementById('in-peso').value;
-            if(!lote || !peso) return alert("Preencha Lote e Peso!");
+            const errorLabel = document.getElementById('entrada-error');
+
+            if(!lote || !peso) return;
+
+            // VALIDAÇÃO DE DUPLICIDADE
+            const existe = todosOsLotes.find(l => l.id === lote);
+            if(existe) {
+                idInput.classList.add('error-shake');
+                errorLabel.classList.remove('hidden');
+                beep(150, 0.5); // Som de erro
+                setTimeout(() => { 
+                    idInput.classList.remove('error-shake');
+                    errorLabel.classList.add('hidden');
+                }, 3000);
+                idInput.value = "";
+                return;
+            }
 
             await zincoRef.doc(lote).set({
                 id: lote, peso: peso, data_entrada: new Date().toISOString(),
                 data_picagem: null, status: 'estoque', ts_entrada: Date.now()
             });
-            document.getElementById('in-lote').value = ""; document.getElementById('in-peso').value = "";
-        }
-
-        async function apagarLote(id) {
-            if(confirm(`Deseja apagar o lote ${id} do stock?`)) {
-                const pass = prompt("Senha de confirmação:");
-                if(pass === SENHA_MESTRA) {
-                    await zincoRef.doc(id).delete();
-                } else { alert("Senha incorreta!"); }
-            }
-        }
-
-        async function editarPeso(id, pesoAtual) {
-            const novoPeso = prompt(`Novo peso para o lote ${id}:`, pesoAtual);
-            if(novoPeso && !isNaN(novoPeso)) {
-                await zincoRef.doc(id).update({ peso: novoPeso });
-            }
+            idInput.value = ""; document.getElementById('in-peso').value = "";
+            idInput.focus();
         }
 
         zincoRef.orderBy('ts_entrada', 'desc').onSnapshot(snap => {
@@ -154,26 +159,26 @@
                     <tr>
                         <td class="p-4 font-bold text-slate-800">${d.id}</td>
                         <td class="p-4 font-mono">${d.peso} kg</td>
-                        <td class="p-4 flex gap-2">
-                            <button onclick="editarPeso('${d.id}', '${d.peso}')" class="text-blue-500 text-[10px] font-bold uppercase">Editar</button>
-                            <button onclick="apagarLote('${d.id}')" class="text-red-500 text-[10px] font-bold uppercase">Apagar</button>
+                        <td class="p-4 flex gap-3">
+                            <button onclick="editarPeso('${d.id}', '${d.peso}')" class="text-blue-500 font-bold uppercase text-[10px]">Editar</button>
+                            <button onclick="apagarLote('${d.id}')" class="text-red-500 font-bold uppercase text-[10px]">Apagar</button>
                         </td>
                     </tr>
                 `;
 
                 if(d.status === 'estoque' || (d.status === 'consumido' && isToday(d.data_picagem))) {
                     listPicagem.innerHTML += `
-                        <div class="bg-white p-4 rounded-2xl border flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
+                        <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
                             <div>
-                                <span class="block font-black text-slate-800 text-lg">${d.id} <small class="text-slate-400 font-normal text-xs">(${d.peso}kg)</small></span>
-                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Entrada: ${new Date(d.data_entrada).toLocaleString()}</span>
+                                <span class="block font-black text-slate-800">${d.id} <small class="text-slate-400">(${d.peso}kg)</small></span>
+                                <span class="text-[9px] text-slate-400 font-bold">Entrada: ${new Date(d.data_entrada).toLocaleDateString()}</span>
                             </div>
-                            <div class="flex items-center gap-3">
+                            <div>
                                 ${d.status === 'estoque' 
-                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase">Registar Uso</button>`
-                                    : `<div class="flex flex-col items-end">
-                                        <span class="text-emerald-600 font-black text-[10px] uppercase">● Consumido em ${new Date(d.data_picagem).toLocaleTimeString()}</span>
-                                        <button onclick="reverterPicagem('${d.id}')" class="text-rose-500 text-[9px] font-bold underline mt-1">Reverter (Erro)</button>
+                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase">Registar</button>`
+                                    : `<div class="text-right">
+                                        <span class="text-emerald-600 font-black text-[10px] uppercase tracking-tighter italic">Consumido</span>
+                                        <button onclick="reverterPicagem('${d.id}')" class="block text-rose-500 text-[9px] underline">Reverter</button>
                                        </div>`
                                 }
                             </div>
@@ -188,17 +193,26 @@
         }
 
         async function reverterPicagem(id) {
-            const pass = prompt("Digite a senha para REVERTER este lote para o stock:");
+            const pass = prompt("Senha para reverter:");
             if(pass === SENHA_MESTRA) {
                 await zincoRef.doc(id).update({ data_picagem: null, status: 'estoque', ts_picagem: null });
-                alert("Lote revertido com sucesso!");
-            } else { alert("Senha incorreta!"); }
+            } else { alert("Senha incorreta"); }
+        }
+
+        async function apagarLote(id) {
+            const pass = prompt(`Confirmar exclusão do lote ${id}:`);
+            if(pass === SENHA_MESTRA) await zincoRef.doc(id).delete();
+        }
+
+        async function editarPeso(id, peso) {
+            const n = prompt("Novo peso:", peso);
+            if(n) await zincoRef.doc(id).update({ peso: n });
         }
 
         function isToday(dateStr) {
             if(!dateStr) return false;
             const d = new Date(dateStr); const t = new Date();
-            return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
+            return d.getDate() === t.getDate() && d.getMonth() === t.getMonth();
         }
 
         function gerarPDF() {
@@ -209,27 +223,44 @@
                 const d = l.data_entrada.split('T')[0];
                 return (!inicio || d >= inicio) && (!fim || d <= fim);
             });
-            doc.setFontSize(16); doc.text("RELATÓRIO GAMIL - MOVIMENTAÇÃO DE ZINCO", 14, 20);
-            doc.setFontSize(9); doc.text(`Gerado em: ${new Date().toLocaleString()} | Filtro: ${inicio || 'Total'} a ${fim || 'Total'}`, 14, 28);
-            const rows = dados.map(l => [l.id, l.peso + " kg", new Date(l.data_entrada).toLocaleDateString(), l.data_picagem ? new Date(l.data_picagem).toLocaleString() : 'STOCK', l.status.toUpperCase()]);
-            doc.autoTable({ head: [['ID Lote', 'Peso', 'Entrada', 'Picagem (Uso)', 'Status']], body: rows, startY: 35, theme: 'grid', headStyles: { fillColor: [15, 23, 42] } });
-            doc.save(`relatorio_gamil_zinco.pdf`);
+            doc.setFontSize(16); doc.text("GAMIL - RELATÓRIO DE ZINCO", 14, 20);
+            const rows = dados.map(l => [l.id, l.peso + "kg", new Date(l.data_entrada).toLocaleDateString(), l.data_picagem ? new Date(l.data_picagem).toLocaleString() : 'STOCK', l.status.toUpperCase()]);
+            doc.autoTable({ head: [['Lote', 'Peso', 'Entrada', 'Consumo', 'Status']], body: rows, startY: 30, headStyles: { fillColor: [15, 23, 42] } });
+            doc.save(`relatorio_zinco.pdf`);
         }
+
+        function beep(f, d) { try { const c = new (window.AudioContext || window.webkitAudioContext)(); const o = c.createOscillator(); const g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; o.start(); setTimeout(() => o.stop(), d * 1000); } catch(e) {} }
 
         document.getElementById('pda-scan').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const id = e.target.value.trim().toUpperCase();
                 const lote = todosOsLotes.find(l => l.id === id);
-                if(lote) { picarLote(id); showFeedback("✅ LOTE " + id + " CONSUMIDO", "bg-emerald-600"); }
-                else { showFeedback("❌ LOTE NÃO EXISTE NO STOCK", "bg-rose-600"); }
+                if(lote) {
+                    if(lote.status === 'consumido') {
+                        showFeedback("⚠️ LOTE JÁ CONSUMIDO!", "bg-rose-900 border-2 border-white text-white");
+                        beep(150, 0.7);
+                    } else {
+                        picarLote(id);
+                        showFeedback("✅ LOTE REGISTADO", "bg-emerald-600 text-white");
+                        beep(600, 0.1);
+                    }
+                } else {
+                    showFeedback("❌ NÃO EXISTE NO STOCK", "bg-rose-600 text-white");
+                    beep(150, 0.5);
+                }
                 e.target.value = "";
             }
         });
 
         function showFeedback(msg, color) {
             const f = document.getElementById('pda-feedback');
-            f.innerText = msg; f.className = `mt-4 p-4 rounded-xl text-center font-bold text-lg block text-white ${color}`;
+            f.innerText = msg; f.className = `mt-4 p-4 rounded-xl text-center font-bold text-lg block ${color}`;
             setTimeout(() => f.classList.add('hidden'), 3000);
+        }
+
+        function editarPeso(id, peso) {
+            const n = prompt(`Novo peso para ${id}:`, peso);
+            if(n && !isNaN(n)) zincoRef.doc(id).update({ peso: n });
         }
     </script>
 </body>
