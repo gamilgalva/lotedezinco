@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Zinco v3.1 Final Gold</title>
+    <title>Gamil | Zinco v3.5 Logística</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -28,7 +28,7 @@
         <div class="container mx-auto flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-black tracking-tighter text-blue-400">GAMIL <span class="text-white">ZINCO</span></h1>
-                <p class="text-[9px] uppercase font-bold opacity-50">Controle de Produção</p>
+                <p class="text-[9px] uppercase font-bold opacity-50 italic">Logística & Fornecedores</p>
             </div>
             
             <div class="flex gap-3 text-right">
@@ -57,6 +57,10 @@
 
         <section id="sec-entrada" class="space-y-4">
             <div id="card-entrada" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <input type="text" id="in-fornecedor" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="NOME DO FORNECEDOR">
+                    <input type="text" id="in-caminhao" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="Nº CAMINHÃO / GUIA">
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="ID LOTE">
                     <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 ring-blue-500" placeholder="PESO (KG)">
@@ -70,8 +74,8 @@
                     <thead class="bg-slate-50 border-b">
                         <tr>
                             <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Lote</th>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Fornecedor</th>
                             <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Peso</th>
-                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Entrada</th>
                             <th class="p-4 font-bold uppercase text-[10px] text-slate-400 text-center">Ações</th>
                         </tr>
                     </thead>
@@ -99,7 +103,7 @@
         </section>
 
         <section id="sec-status" class="hidden space-y-4">
-            <div id="resumo-diario" class="space-y-2"></div>
+            <div id="resumo-diario" class="space-y-4"></div>
         </section>
 
     </main>
@@ -136,12 +140,14 @@
 
         async function salvarEntrada() {
             const idInput = document.getElementById('in-lote');
+            const fornecedor = document.getElementById('in-fornecedor').value.trim().toUpperCase();
+            const caminhao = document.getElementById('in-caminhao').value.trim().toUpperCase();
             const lote = idInput.value.trim().toUpperCase();
             const peso = document.getElementById('in-peso').value;
             const dataManual = document.getElementById('in-data-manual').value;
             const err = document.getElementById('entrada-error');
 
-            if(!lote || !peso) return;
+            if(!lote || !peso) return alert("Lote e Peso são obrigatórios!");
             if(todosOsLotes.find(l => l.id === lote)) {
                 idInput.classList.add('error-shake'); err.classList.remove('hidden'); beep(150, 0.5);
                 setTimeout(() => { idInput.classList.remove('error-shake'); err.classList.add('hidden'); }, 3000);
@@ -153,10 +159,17 @@
             dataFinal.setHours(agora.getHours(), agora.getMinutes(), agora.getSeconds());
 
             await zincoRef.doc(lote).set({
-                id: lote, peso: parseFloat(peso), data_entrada: dataFinal.toISOString(),
-                data_picagem: null, status: 'estoque', ts_entrada: dataFinal.getTime()
+                id: lote, 
+                peso: parseFloat(peso), 
+                fornecedor: fornecedor || "N/A",
+                caminhao: caminhao || "N/A",
+                data_entrada: dataFinal.toISOString(),
+                data_picagem: null, 
+                status: 'estoque', 
+                ts_entrada: dataFinal.getTime()
             });
             idInput.value = ""; document.getElementById('in-peso').value = "";
+            idInput.focus();
         }
 
         zincoRef.orderBy('ts_entrada', 'desc').onSnapshot(snap => {
@@ -180,8 +193,8 @@
                 listEntrada.innerHTML += `
                     <tr>
                         <td class="p-4 font-bold text-slate-800">${d.id}</td>
+                        <td class="p-4 text-[10px] text-slate-500 uppercase font-black">${d.fornecedor || '---'}</td>
                         <td class="p-4 font-bold text-blue-600">${d.peso}kg</td>
-                        <td class="p-4 text-[10px] text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td>
                         <td class="p-4 flex gap-2 justify-center">
                             <button onclick="editarPeso('${d.id}', '${d.peso}')" class="text-blue-500 font-bold text-[9px] uppercase">Edit</button>
                             <button onclick="apagarLote('${d.id}')" class="text-red-500 font-bold text-[9px] uppercase">Del</button>
@@ -192,14 +205,13 @@
                 if(d.status === 'estoque' || (d.status === 'consumido' && isToday(d.data_picagem))) {
                     listPicagem.innerHTML += `
                         <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
-                            <div><span class="block font-black text-slate-800">${d.id} (${d.peso}kg)</span><span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Entrada: ${new Date(d.data_entrada).toLocaleString()}</span></div>
+                            <div><span class="block font-black text-slate-800">${d.id} (${d.peso}kg)</span><span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">${d.fornecedor} | Caminhão: ${d.caminhao}</span></div>
                             <div>${d.status === 'estoque' ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase">Picar</button>` : `<button onclick="reverterPicagem('${d.id}')" class="text-rose-500 text-[9px] underline font-bold">Reverter</button>`}</div>
                         </div>
                     `;
                 }
             });
 
-            // ATUALIZA PAINEL SUPERIOR
             document.getElementById('display-lotes').innerText = totalLotesEstoque;
             document.getElementById('display-ton').innerHTML = (totalPesoEstoque / 1000).toFixed(3) + ' <small class="text-[10px] text-white">t</small>';
         });
@@ -208,25 +220,39 @@
             const container = document.getElementById('resumo-diario');
             container.innerHTML = "";
             const resumo = {};
+
             todosOsLotes.forEach(l => {
                 const dia = l.data_entrada.split('T')[0];
-                resumo[dia] = (resumo[dia] || 0) + 1;
+                const chaveAgrupada = `${dia}|${l.fornecedor}|${l.caminhao}`;
+                if (!resumo[chaveAgrupada]) resumo[chaveAgrupada] = { qtd: 0, peso: 0, dia, fornecedor: l.fornecedor, caminhao: l.caminhao };
+                resumo[chaveAgrupada].qtd++;
+                resumo[chaveAgrupada].peso += l.peso;
             });
-            Object.keys(resumo).sort().reverse().forEach(dia => {
-                container.innerHTML += `<div class="flex justify-between p-3 bg-white rounded-lg border border-slate-100 mb-2 shadow-sm font-bold"><span class="text-slate-700">${new Date(dia).toLocaleDateString()}</span><span class="text-blue-600">${resumo[dia]} Lotes</span></div>`;
+
+            const chavesOrdenadas = Object.keys(resumo).sort().reverse();
+            
+            chavesOrdenadas.forEach(chave => {
+                const r = resumo[chave];
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center border-b pb-2 mb-2">
+                            <span class="font-black text-slate-700 text-sm italic">${new Date(r.dia).toLocaleDateString()}</span>
+                            <span class="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">Caminhão: ${r.caminhao}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="block text-xs font-black uppercase text-blue-600">${r.fornecedor}</span>
+                                <span class="text-[10px] text-slate-400 font-bold">${r.qtd} LOTES RECEBIDOS</span>
+                            </div>
+                            <span class="font-black text-slate-800 text-lg">${(r.peso/1000).toFixed(3)}t</span>
+                        </div>
+                    </div>`;
             });
         }
 
         async function picarLote(id) { await zincoRef.doc(id).update({ data_picagem: new Date().toISOString(), status: 'consumido', ts_picagem: Date.now() }); }
-        
-        async function reverterPicagem(id) { 
-            if(prompt("Senha:") === SENHA_MESTRA) await zincoRef.doc(id).update({ data_picagem: null, status: 'estoque' }); 
-        }
-
-        async function apagarLote(id) { 
-            if(prompt("Senha:") === SENHA_MESTRA) await zincoRef.doc(id).delete(); 
-        }
-
+        async function reverterPicagem(id) { if(prompt("Senha:") === SENHA_MESTRA) await zincoRef.doc(id).update({ data_picagem: null, status: 'estoque' }); }
+        async function apagarLote(id) { if(prompt("Senha:") === SENHA_MESTRA) await zincoRef.doc(id).delete(); }
         async function editarPeso(id, peso) {
             const n = prompt(`Novo peso para ${id}:`, peso);
             if(n && !isNaN(n)) await zincoRef.doc(id).update({ peso: parseFloat(n) });
@@ -235,17 +261,25 @@
         function isToday(dateStr) { return dateStr && new Date(dateStr).toDateString() === new Date().toDateString(); }
 
         function gerarPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('l', 'mm', 'a4'); // Paisagem para caber mais colunas
             const inicio = document.getElementById('filtro-inicio').value;
             const fim = document.getElementById('filtro-fim').value;
             const dados = todosOsLotes.filter(l => {
                 const d = l.data_entrada.split('T')[0];
                 return (!inicio || d >= inicio) && (!fim || d <= fim);
             });
-            doc.setFontSize(16); doc.text("GAMIL - RELATÓRIO DE ZINCO", 14, 20);
-            const rows = dados.reverse().map((l, i) => [i + 1, l.id, l.peso + "kg", new Date(l.data_entrada).toLocaleString(), l.data_picagem ? new Date(l.data_picagem).toLocaleString() : 'STOCK', l.status.toUpperCase()]);
-            doc.autoTable({ head: [['Nº', 'Lote', 'Peso', 'Entrada', 'Picagem', 'Status']], body: rows, startY: 35, headStyles: { fillColor: [15, 23, 42] } });
-            doc.save(`gamil_zinco_relatorio.pdf`);
+            doc.setFontSize(16); doc.text("GAMIL - CONTROLE DE LOGÍSTICA DE ZINCO", 14, 20);
+            const rows = dados.reverse().map((l, i) => [
+                i + 1, 
+                l.id, 
+                l.fornecedor, 
+                l.caminhao, 
+                l.peso + "kg", 
+                new Date(l.data_entrada).toLocaleString(), 
+                l.status.toUpperCase()
+            ]);
+            doc.autoTable({ head: [['Nº', 'Lote', 'Fornecedor', 'Caminhão', 'Peso', 'Entrada', 'Status']], body: rows, startY: 35, headStyles: { fillColor: [15, 23, 42] } });
+            doc.save(`gamil_zinco_logistica.pdf`);
         }
 
         function beep(f, d) { try { const c = new (window.AudioContext || window.webkitAudioContext)(); const o = c.createOscillator(); const g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; o.start(); setTimeout(() => o.stop(), d * 1000); } catch(e) {} }
