@@ -3,160 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Controle de Lotes Zinco</title>
+    <title>Gamil | Gestão Avançada de Zinco</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .row-validated { border-left: 6px solid #10b981; background-color: #f0fdf4; }
-        .row-new { border-left: 6px solid #3b82f6; background-color: #eff6ff; }
-        @media print {
-            header, .no-print, #pda-input { display: none !important; }
-            body { background-color: white !important; }
-            .shadow-xl { box-shadow: none !important; border: 1px solid #ddd !important; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .tab-active { border-bottom: 4px solid #3b82f6; color: #1e40af; font-weight: 800; }
+        input[type="datetime-local"] { font-family: inherit; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-10 text-slate-900">
+<body class="min-h-screen pb-10">
 
-    <header class="bg-slate-900 text-white shadow-xl sticky top-0 z-50 no-print">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-extrabold tracking-tighter text-blue-400">GAMIL <span class="text-white">ZINCO</span></h1>
-                <p class="text-[10px] uppercase tracking-widest opacity-60 font-bold">Gestão de Recebimento</p>
-            </div>
-            <div class="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-                <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span class="text-[10px] font-bold text-slate-300 uppercase italic">Novo Banco Ativo</span>
+    <header class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-black tracking-tighter text-blue-400">GAMIL <span class="text-white">ZINCO PRO</span></h1>
+            <div id="sync-status" class="text-[10px] font-bold bg-slate-800 px-3 py-1 rounded-full border border-slate-700 uppercase italic">
+                Sincronizado via Firebase
             </div>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-6 max-w-4xl">
-        
-        <div class="bg-white rounded-2xl shadow-xl border-4 border-slate-900 p-4 mb-6 no-print">
-            <input type="text" id="pda-input" class="w-full p-4 text-3xl text-center font-black bg-slate-50 rounded-xl outline-none border-2 border-transparent focus:border-blue-500 uppercase" placeholder="SCANNER LOTES" autofocus>
-            <div id="pda-feedback" class="hidden mt-4 p-4 rounded-xl text-center font-bold text-lg"></div>
+    <nav class="bg-white border-b sticky top-[64px] z-40 shadow-sm">
+        <div class="container mx-auto flex">
+            <button onclick="switchTab('entrada')" id="tab-entrada" class="flex-1 py-4 text-xs font-bold uppercase tracking-widest tab-active">1. Entrada (Stock)</button>
+            <button onclick="switchTab('picagem')" id="tab-picagem" class="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-slate-400">2. Picagem (Uso)</button>
+            <button onclick="switchTab('relatorio')" id="tab-relatorio" class="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-slate-400">3. Relatórios</button>
         </div>
+    </nav>
 
-        <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-            <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
-                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">Histórico de Movimentação</h2>
-                <button onclick="window.print()" class="no-print bg-slate-800 text-white text-[10px] px-4 py-2 rounded-lg font-bold uppercase">🖨️ Gerar Relatório</button>
+    <main class="container mx-auto px-4 py-6 max-w-4xl">
+
+        <section id="sec-entrada" class="space-y-4">
+            <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
+                <h3 class="text-lg font-black mb-4 uppercase text-slate-700">Novo Lote Chegando</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase" placeholder="ID DO LOTE">
+                    <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold" placeholder="PESO (KG)">
+                    <button onclick="salvarEntrada()" class="bg-blue-600 text-white font-bold rounded-xl py-3 hover:bg-blue-700 transition-all uppercase">Adicionar</button>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-500">Lote</th>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-500">Peso</th>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-500">Data Chegada</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-entrada" class="divide-y divide-slate-100 italic"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="sec-picagem" class="hidden space-y-4">
+            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border-4 border-blue-500">
+                <h3 class="text-white text-center text-xs font-bold uppercase tracking-widest mb-4 opacity-70">Escaneie para Consumir Lote</h3>
+                <input type="text" id="pda-scan" class="w-full p-4 text-3xl text-center font-black bg-white rounded-xl outline-none uppercase" placeholder="LOTE ID">
+                <div id="pda-feedback" class="hidden mt-4 p-4 rounded-xl text-center font-bold text-lg animate-pulse"></div>
             </div>
             
-            <div id="lotes-list" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto font-mono text-sm">
-                <p class="p-10 text-center text-slate-400 italic">Carregando dados...</p>
+            <div id="lista-picagem" class="space-y-3">
+                </div>
+        </section>
+
+        <section id="sec-relatorio" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
+                <h3 class="font-black uppercase mb-4 text-slate-700">Filtros e Exportação</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="text-[10px] font-bold uppercase text-slate-400">Data Início</label>
+                        <input type="date" id="filtro-inicio" class="w-full p-2 border rounded-lg bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold uppercase text-slate-400">Data Fim</label>
+                        <input type="date" id="filtro-fim" class="w-full p-2 border rounded-lg bg-slate-50">
+                    </div>
+                </div>
+                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-bold py-4 rounded-xl uppercase hover:bg-black transition-all">📄 Gerar Relatório em PDF</button>
             </div>
-        </div>
+        </section>
+
     </main>
 
     <script>
-        // --- CREDENCIAIS ATUALIZADAS CONFORME SUA IMAGEM ---
+        // --- CONFIGURAÇÃO FIREBASE (SUAS CREDENCIAIS) ---
         const firebaseConfig = {
             apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
             authDomain: "lotezinco.firebaseapp.com",
             projectId: "lotezinco",
             storageBucket: "lotezinco.firebasestorage.app",
             messagingSenderId: "797490873231",
-            appId: "1:797490873231:web:a0bd5cef82b5389ad01fa",
-            measurementId: "G-EVG9KMLK41"
+            appId: "1:797490873231:web:a0bd5cef82b5389ad01fa"
         };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const zincoRef = db.collection("recebimento_zinco");
+        const zincoRef = db.collection("movimentacao_zinco");
 
-        let lotesLocais = {};
+        let todosOsLotes = [];
 
-        // Monitoramento em tempo real
-        zincoRef.orderBy('timestamp_entrada', 'desc').onSnapshot((snap) => {
-            lotesLocais = {};
-            const container = document.getElementById('lotes-list');
-            container.innerHTML = "";
+        // --- LÓGICA DE ABAS ---
+        function switchTab(tab) {
+            ['entrada', 'picagem', 'relatorio'].forEach(t => {
+                document.getElementById(`sec-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('tab-active');
+                document.getElementById(`tab-${t}`).classList.add('text-slate-400');
+            });
+            document.getElementById(`sec-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            if(tab === 'picagem') setTimeout(() => document.getElementById('pda-scan').focus(), 200);
+        }
 
-            if (snap.empty) {
-                container.innerHTML = `<p class="p-10 text-center text-slate-400 italic">Nenhum lote para exibir.</p>`;
-                return;
-            }
+        // --- SALVAR ENTRADA ---
+        async function salvarEntrada() {
+            const lote = document.getElementById('in-lote').value.trim().toUpperCase();
+            const peso = document.getElementById('in-peso').value;
+            const dataAgora = new Date().toISOString();
+
+            if(!lote || !peso) return alert("Preencha Lote e Peso!");
+
+            await zincoRef.doc(lote).set({
+                id: lote,
+                peso: peso,
+                data_entrada: dataAgora,
+                data_picagem: null,
+                status: 'estoque'
+            });
+
+            document.getElementById('in-lote').value = "";
+            document.getElementById('in-peso').value = "";
+        }
+
+        // --- SINCRONIZAÇÃO EM TEMPO REAL ---
+        zincoRef.orderBy('data_entrada', 'desc').onSnapshot(snap => {
+            todosOsLotes = [];
+            const listEntrada = document.getElementById('lista-entrada');
+            const listPicagem = document.getElementById('lista-picagem');
+            listEntrada.innerHTML = "";
+            listPicagem.innerHTML = "";
 
             snap.forEach(doc => {
                 const d = doc.data();
-                lotesLocais[doc.id] = d;
-                
-                const div = document.createElement('div');
-                div.className = `p-4 flex flex-col md:flex-row md:items-center justify-between gap-2 ${d.data_validacao ? 'row-validated' : 'row-new'}`;
-                
-                div.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-bold text-lg text-slate-800 tracking-tight">${doc.id}</span>
-                        <span class="text-[10px] text-slate-500 font-bold uppercase">Entrada: ${d.data_entrada}</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        ${d.data_validacao 
-                            ? `<div class="text-right">
-                                <span class="block text-[10px] font-black text-emerald-600 uppercase tracking-tighter">✅ Validado</span>
-                                <span class="text-[11px] font-bold text-slate-600">${d.data_validacao}</span>
-                               </div>` 
-                            : `<span class="bg-blue-600 text-white text-[9px] px-3 py-1 rounded font-black animate-pulse uppercase">Aguardando Validação</span>`
-                        }
-                    </div>
+                todosOsLotes.push(d);
+
+                // Renderiza na aba de Entrada
+                listEntrada.innerHTML += `
+                    <tr>
+                        <td class="p-4 font-bold text-slate-800">${d.id}</td>
+                        <td class="p-4">${d.peso} kg</td>
+                        <td class="p-4 text-xs text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td>
+                    </tr>
                 `;
-                container.appendChild(div);
+
+                // Renderiza na aba de Picagem (Somente o que não foi picado ou o que foi picado recentemente)
+                if(d.status === 'estoque' || (d.status === 'consumido' && isToday(d.data_picagem))) {
+                    listPicagem.innerHTML += `
+                        <div class="bg-white p-4 rounded-xl border flex flex-col md:flex-row justify-between gap-4">
+                            <div>
+                                <span class="block font-black text-slate-800">${d.id} (${d.peso}kg)</span>
+                                <span class="text-[10px] text-slate-400 uppercase">Entrada: ${new Date(d.data_entrada).toLocaleDateString()}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="datetime-local" onchange="editarData('${d.id}', this.value)" 
+                                    value="${d.data_picagem ? d.data_picagem.slice(0,16) : ''}" 
+                                    class="p-2 border rounded-lg text-xs font-bold ${d.status === 'estoque' ? 'bg-slate-100' : 'bg-green-50'}">
+                                ${d.status === 'estoque' 
+                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-3 py-2 rounded-lg font-black">PICAR</button>`
+                                    : `<span class="text-green-600 font-black text-[10px]">OK</span>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                }
             });
         });
 
-        async function processarLote(code) {
-            const f = document.getElementById('pda-feedback');
-            f.className = "mt-4 p-4 rounded-xl text-center font-bold text-lg block";
-            
-            const agora = new Date().toLocaleString('pt-PT');
-            const loteExistente = lotesLocais[code];
-
-            try {
-                if (!loteExistente) {
-                    // PASSO 1: REGISTRAR ENTRADA
-                    await zincoRef.doc(code).set({
-                        data_entrada: agora,
-                        data_validacao: null,
-                        timestamp_entrada: Date.now()
-                    });
-                    f.innerText = "📥 ENTRADA REGISTRADA: " + code;
-                    f.classList.add('bg-blue-600', 'text-white');
-                    beep(600, 0.1);
-                } else if (!loteExistente.data_validacao) {
-                    // PASSO 2: VALIDAR ENTRADA JÁ EXISTENTE
-                    await zincoRef.doc(code).update({
-                        data_validacao: agora,
-                        timestamp_validacao: Date.now()
-                    });
-                    f.innerText = "✅ VALIDAÇÃO CONCLUÍDA: " + code;
-                    f.classList.add('bg-emerald-600', 'text-white');
-                    beep(800, 0.1);
-                } else {
-                    // JÁ VALIDADO ANTES
-                    f.innerText = "⚠️ LOTE JÁ VALIDADO ANTERIORMENTE: " + code;
-                    f.classList.add('bg-amber-500', 'text-white');
-                    beep(300, 0.2);
-                }
-            } catch (err) {
-                f.innerText = "❌ ERRO DE CONEXÃO";
-                f.classList.add('bg-red-600', 'text-white');
-            }
-
-            setTimeout(() => { f.classList.add('hidden'); }, 3000);
+        async function picarLote(id) {
+            const agora = new Date().toISOString();
+            await zincoRef.doc(id).update({
+                data_picagem: agora,
+                status: 'consumido'
+            });
         }
 
-        function beep(f, d) { try { const c = new (window.AudioContext || window.webkitAudioContext)(); const o = c.createOscillator(); const g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; o.start(); setTimeout(() => o.stop(), d * 1000); } catch(e) {} }
+        async function editarData(id, novaData) {
+            await zincoRef.doc(id).update({
+                data_picagem: new Date(novaData).toISOString(),
+                status: 'consumido'
+            });
+        }
 
-        document.getElementById('pda-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') { 
-                const val = e.target.value.trim().toUpperCase();
-                if(val) processarLote(val); 
-                e.target.value = ""; 
+        // --- GERADOR DE PDF ---
+        function gerarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const inicio = document.getElementById('filtro-inicio').value;
+            const fim = document.getElementById('filtro-fim').value;
+
+            // Filtra os dados
+            const dadosFiltrados = todosOsLotes.filter(l => {
+                const d = l.data_entrada.split('T')[0];
+                return (!inicio || d >= inicio) && (!fim || d <= fim);
+            });
+
+            doc.setFontSize(18);
+            doc.text("RELATÓRIO DE MOVIMENTAÇÃO DE ZINCO", 14, 20);
+            doc.setFontSize(10);
+            doc.text(`Período: ${inicio || 'Início'} até ${fim || 'Hoje'}`, 14, 30);
+
+            const rows = dadosFiltrados.map(l => [
+                l.id, 
+                l.peso + " kg", 
+                new Date(l.data_entrada).toLocaleString(), 
+                l.data_picagem ? new Date(l.data_picagem).toLocaleString() : 'EM ESTOQUE',
+                l.status.toUpperCase()
+            ]);
+
+            doc.autoTable({
+                head: [['ID Lote', 'Peso', 'Data Entrada', 'Data Picagem', 'Status']],
+                body: rows,
+                startY: 40,
+                theme: 'grid',
+                headStyles: { fillColor: [30, 41, 59] }
+            });
+
+            doc.save(`relatorio-zinco-${Date.now()}.pdf`);
+        }
+
+        function isToday(dateStr) {
+            if(!dateStr) return false;
+            const d = new Date(dateStr);
+            const today = new Date();
+            return d.getDate() === today.getDate() && d.getMonth() === today.getMonth();
+        }
+
+        // Scanner Listener
+        document.getElementById('pda-scan').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const id = e.target.value.trim().toUpperCase();
+                const lote = todosOsLotes.find(l => l.id === id);
+                if(lote) {
+                    picarLote(id);
+                    document.getElementById('pda-feedback').innerText = "CONCLUÍDO: " + id;
+                    document.getElementById('pda-feedback').className = "mt-4 p-4 rounded-xl text-center font-bold text-lg block bg-emerald-600 text-white";
+                } else {
+                    document.getElementById('pda-feedback').innerText = "LOTE NÃO ENCONTRADO";
+                    document.getElementById('pda-feedback').className = "mt-4 p-4 rounded-xl text-center font-bold text-lg block bg-rose-600 text-white";
+                }
+                e.target.value = "";
+                setTimeout(() => document.getElementById('pda-feedback').classList.add('hidden'), 2000);
             }
         });
     </script>
