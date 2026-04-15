@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Gestão de Lotes de Zinco</title>
+    <title>Gamil | Controle de Lotes Zinco</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -11,11 +11,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .row-validated { border-left: 5px solid #10b981; background-color: #f0fdf4; }
-        .row-new { border-left: 5px solid #3b82f6; background-color: #eff6ff; }
+        .row-validated { border-left: 6px solid #10b981; background-color: #f0fdf4; }
+        .row-new { border-left: 6px solid #3b82f6; background-color: #eff6ff; }
         @media print {
-            header, nav, .no-print, button, #pda-input { display: none !important; }
-            body { background-color: white !important; padding: 0 !important; }
+            header, .no-print, #pda-input { display: none !important; }
+            body { background-color: white !important; }
+            .shadow-xl { box-shadow: none !important; border: 1px solid #ddd !important; }
         }
     </style>
 </head>
@@ -24,63 +25,61 @@
     <header class="bg-slate-900 text-white shadow-xl sticky top-0 z-50 no-print">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div>
-                <h1 class="text-xl font-extrabold tracking-tighter text-slate-400">GAMIL <span class="text-white">ZINCO</span></h1>
-                <p class="text-[10px] uppercase tracking-widest opacity-60 font-bold italic">Controle de Recebimento e Validação</p>
+                <h1 class="text-xl font-extrabold tracking-tighter text-blue-400">GAMIL <span class="text-white">ZINCO</span></h1>
+                <p class="text-[10px] uppercase tracking-widest opacity-60 font-bold">Gestão de Recebimento</p>
             </div>
             <div class="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-                <div id="status-dot" class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                <span class="text-[10px] font-bold text-slate-300 uppercase italic">Registro de Lotes</span>
+                <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span class="text-[10px] font-bold text-slate-300 uppercase italic">Novo Banco Ativo</span>
             </div>
         </div>
     </header>
 
     <main class="container mx-auto px-4 py-6 max-w-4xl">
         
-        <div class="bg-white rounded-2xl shadow-xl border-4 border-slate-800 p-4 mb-6 no-print">
-            <label class="block text-center text-[10px] font-bold text-slate-400 uppercase mb-2">Escanear ID do Lote</label>
-            <input type="text" id="pda-input" class="w-full p-4 text-3xl text-center font-black bg-slate-50 rounded-xl outline-none border-2 border-transparent focus:border-blue-500" placeholder="000000" autofocus>
+        <div class="bg-white rounded-2xl shadow-xl border-4 border-slate-900 p-4 mb-6 no-print">
+            <input type="text" id="pda-input" class="w-full p-4 text-3xl text-center font-black bg-slate-50 rounded-xl outline-none border-2 border-transparent focus:border-blue-500 uppercase" placeholder="SCANNER LOTES" autofocus>
             <div id="pda-feedback" class="hidden mt-4 p-4 rounded-xl text-center font-bold text-lg"></div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
             <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
-                <h2 class="text-sm font-bold uppercase tracking-tight text-slate-600">Lotes no Sistema</h2>
-                <div class="flex gap-2 no-print">
-                    <button onclick="window.print()" class="bg-slate-200 text-slate-700 text-[10px] px-4 py-2 rounded-lg font-bold uppercase hover:bg-slate-300 transition-all">🖨️ Relatório</button>
-                </div>
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">Histórico de Movimentação</h2>
+                <button onclick="window.print()" class="no-print bg-slate-800 text-white text-[10px] px-4 py-2 rounded-lg font-bold uppercase">🖨️ Gerar Relatório</button>
             </div>
             
             <div id="lotes-list" class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto font-mono text-sm">
-                </div>
+                <p class="p-10 text-center text-slate-400 italic">Carregando dados...</p>
+            </div>
         </div>
     </main>
 
     <script>
-        // --- CONFIGURAÇÃO FIREBASE (SUBSTITUA PELOS DADOS DO NOVO BANCO) ---
+        // --- CREDENCIAIS ATUALIZADAS CONFORME SUA IMAGEM ---
         const firebaseConfig = {
-            apiKey: "COLAR_AQUI",
-            authDomain: "COLAR_AQUI",
-            projectId: "COLAR_AQUI",
-            storageBucket: "COLAR_AQUI",
-            messagingSenderId: "COLAR_AQUI",
-            appId: "COLAR_AQUI"
+            apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
+            authDomain: "lotezinco.firebaseapp.com",
+            projectId: "lotezinco",
+            storageBucket: "lotezinco.firebasestorage.app",
+            messagingSenderId: "797490873231",
+            appId: "1:797490873231:web:a0bd5cef82b5389ad01fa",
+            measurementId: "G-EVG9KMLK41"
         };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        // Alterado para uma coleção específica de Zinco
         const zincoRef = db.collection("recebimento_zinco");
 
         let lotesLocais = {};
 
-        // Escuta em tempo real
-        zincoRef.orderBy('data_entrada', 'desc').onSnapshot((snap) => {
+        // Monitoramento em tempo real
+        zincoRef.orderBy('timestamp_entrada', 'desc').onSnapshot((snap) => {
             lotesLocais = {};
             const container = document.getElementById('lotes-list');
             container.innerHTML = "";
 
             if (snap.empty) {
-                container.innerHTML = `<p class="p-10 text-center text-slate-400 italic">Nenhum lote registrado.</p>`;
+                container.innerHTML = `<p class="p-10 text-center text-slate-400 italic">Nenhum lote para exibir.</p>`;
                 return;
             }
 
@@ -89,18 +88,20 @@
                 lotesLocais[doc.id] = d;
                 
                 const div = document.createElement('div');
-                // Se tiver data de validação, fica verde. Se não, fica azul (apenas entrada).
                 div.className = `p-4 flex flex-col md:flex-row md:items-center justify-between gap-2 ${d.data_validacao ? 'row-validated' : 'row-new'}`;
                 
                 div.innerHTML = `
                     <div class="flex flex-col">
-                        <span class="font-bold text-lg text-slate-800">${doc.id}</span>
-                        <span class="text-[10px] text-slate-500 uppercase">Entrada: ${d.data_entrada}</span>
+                        <span class="font-bold text-lg text-slate-800 tracking-tight">${doc.id}</span>
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">Entrada: ${d.data_entrada}</span>
                     </div>
                     <div class="flex items-center gap-3">
                         ${d.data_validacao 
-                            ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-3 py-1 rounded-full font-bold border border-emerald-200">VALIDADO EM: ${d.data_validacao}</span>` 
-                            : `<span class="bg-blue-100 text-blue-700 text-[10px] px-3 py-1 rounded-full font-bold border border-blue-200 animate-pulse">AGUARDANDO VALIDAÇÃO</span>`
+                            ? `<div class="text-right">
+                                <span class="block text-[10px] font-black text-emerald-600 uppercase tracking-tighter">✅ Validado</span>
+                                <span class="text-[11px] font-bold text-slate-600">${d.data_validacao}</span>
+                               </div>` 
+                            : `<span class="bg-blue-600 text-white text-[9px] px-3 py-1 rounded font-black animate-pulse uppercase">Aguardando Validação</span>`
                         }
                     </div>
                 `;
@@ -117,33 +118,32 @@
 
             try {
                 if (!loteExistente) {
-                    // REGISTRO DE ENTRADA (NOVO LOTE)
+                    // PASSO 1: REGISTRAR ENTRADA
                     await zincoRef.doc(code).set({
                         data_entrada: agora,
                         data_validacao: null,
                         timestamp_entrada: Date.now()
                     });
-                    f.innerText = "📥 LOTE REGISTRADO: " + code;
+                    f.innerText = "📥 ENTRADA REGISTRADA: " + code;
                     f.classList.add('bg-blue-600', 'text-white');
                     beep(600, 0.1);
-                } else if (loteExistente && !loteExistente.data_validacao) {
-                    // VALIDAÇÃO DE LOTE EXISTENTE
+                } else if (!loteExistente.data_validacao) {
+                    // PASSO 2: VALIDAR ENTRADA JÁ EXISTENTE
                     await zincoRef.doc(code).update({
                         data_validacao: agora,
                         timestamp_validacao: Date.now()
                     });
-                    f.innerText = "✅ LOTE VALIDADO: " + code;
+                    f.innerText = "✅ VALIDAÇÃO CONCLUÍDA: " + code;
                     f.classList.add('bg-emerald-600', 'text-white');
                     beep(800, 0.1);
                 } else {
-                    // JÁ FOI VALIDADO ANTES
-                    f.innerText = "⚠️ LOTE JÁ TINHA SIDO VALIDADO: " + code;
+                    // JÁ VALIDADO ANTES
+                    f.innerText = "⚠️ LOTE JÁ VALIDADO ANTERIORMENTE: " + code;
                     f.classList.add('bg-amber-500', 'text-white');
                     beep(300, 0.2);
                 }
-            } catch (error) {
-                console.error(error);
-                f.innerText = "❌ ERRO AO SALVAR";
+            } catch (err) {
+                f.innerText = "❌ ERRO DE CONEXÃO";
                 f.classList.add('bg-red-600', 'text-white');
             }
 
