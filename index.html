@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Zinco v2.6 Anti-Duplicidade</title>
+    <title>Gamil | Zinco v2.7 PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -27,9 +27,7 @@
     <header class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-black tracking-tighter text-blue-400">GAMIL <span class="text-white">ZINCO</span></h1>
-            <div class="flex gap-2">
-                <span class="text-[10px] font-bold bg-rose-900/50 text-rose-300 px-3 py-1 rounded-full border border-rose-700 uppercase">Anti-Duplicidade</span>
-            </div>
+            <span class="text-[10px] font-bold bg-slate-800 text-blue-300 px-3 py-1 rounded-full border border-slate-700 uppercase italic">Controle de Fluxo</span>
         </div>
     </header>
 
@@ -44,14 +42,15 @@
     <main class="container mx-auto px-4 py-6 max-w-4xl">
 
         <section id="sec-entrada" class="space-y-4">
-            <div id="card-entrada" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 transition-all">
+            <div id="card-entrada" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
                 <h3 class="text-xs font-black mb-4 uppercase text-slate-500 tracking-widest">Entrada de Material</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="ID DO LOTE">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="ID LOTE">
                     <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 ring-blue-500" placeholder="PESO (KG)">
-                    <button onclick="salvarEntrada()" class="bg-blue-600 text-white font-bold rounded-xl py-3 uppercase shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Adicionar</button>
+                    <input type="date" id="in-data-manual" class="p-3 bg-slate-50 border rounded-xl font-bold text-xs outline-none focus:ring-2 ring-blue-500">
+                    <button onclick="salvarEntrada()" class="bg-blue-600 text-white font-bold rounded-xl py-3 uppercase shadow-lg hover:bg-blue-700 transition-all">Adicionar</button>
                 </div>
-                <div id="entrada-error" class="hidden mt-3 text-rose-600 text-xs font-bold uppercase animate-bounce">⚠️ Este Lote já existe no sistema!</div>
+                <div id="entrada-error" class="hidden mt-3 text-rose-600 text-[10px] font-bold uppercase animate-bounce">⚠️ Lote já existente no sistema!</div>
             </div>
             
             <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200">
@@ -60,10 +59,11 @@
                         <tr>
                             <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Lote</th>
                             <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Peso</th>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Data/Hora Entrada</th>
                             <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="lista-entrada" class="divide-y divide-slate-100"></tbody>
+                    <tbody id="lista-entrada" class="divide-y divide-slate-100 italic"></tbody>
                 </table>
             </div>
         </section>
@@ -82,7 +82,7 @@
                     <input type="date" id="filtro-inicio" class="p-3 border rounded-xl bg-slate-50 font-bold">
                     <input type="date" id="filtro-fim" class="p-3 border rounded-xl bg-slate-50 font-bold">
                 </div>
-                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase hover:bg-black transition-all">📄 Exportar PDF</button>
+                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase hover:bg-black transition-all">📄 Exportar Relatório PDF</button>
             </div>
         </section>
 
@@ -90,6 +90,10 @@
 
     <script>
         const SENHA_MESTRA = "gamil2026";
+        
+        // Inicializa data de hoje no input manual
+        document.getElementById('in-data-manual').valueAsDate = new Date();
+
         const firebaseConfig = {
             apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
             authDomain: "lotezinco.firebaseapp.com",
@@ -119,28 +123,35 @@
             const idInput = document.getElementById('in-lote');
             const lote = idInput.value.trim().toUpperCase();
             const peso = document.getElementById('in-peso').value;
+            const dataManual = document.getElementById('in-data-manual').value;
             const errorLabel = document.getElementById('entrada-error');
 
             if(!lote || !peso) return;
 
-            // VALIDAÇÃO DE DUPLICIDADE
+            // Validação de Duplicidade
             const existe = todosOsLotes.find(l => l.id === lote);
             if(existe) {
                 idInput.classList.add('error-shake');
                 errorLabel.classList.remove('hidden');
-                beep(150, 0.5); // Som de erro
-                setTimeout(() => { 
-                    idInput.classList.remove('error-shake');
-                    errorLabel.classList.add('hidden');
-                }, 3000);
-                idInput.value = "";
-                return;
+                beep(150, 0.5);
+                setTimeout(() => { idInput.classList.remove('error-shake'); errorLabel.classList.add('hidden'); }, 3000);
+                idInput.value = ""; return;
             }
 
+            // Criar data combinando a data manual com a hora atual
+            const agora = new Date();
+            const dataFinal = new Date(dataManual);
+            dataFinal.setHours(agora.getHours(), agora.getMinutes(), agora.getSeconds());
+
             await zincoRef.doc(lote).set({
-                id: lote, peso: peso, data_entrada: new Date().toISOString(),
-                data_picagem: null, status: 'estoque', ts_entrada: Date.now()
+                id: lote, 
+                peso: peso, 
+                data_entrada: dataFinal.toISOString(),
+                data_picagem: null, 
+                status: 'estoque', 
+                ts_entrada: dataFinal.getTime()
             });
+
             idInput.value = ""; document.getElementById('in-peso').value = "";
             idInput.focus();
         }
@@ -158,10 +169,11 @@
                 listEntrada.innerHTML += `
                     <tr>
                         <td class="p-4 font-bold text-slate-800">${d.id}</td>
-                        <td class="p-4 font-mono">${d.peso} kg</td>
-                        <td class="p-4 flex gap-3">
-                            <button onclick="editarPeso('${d.id}', '${d.peso}')" class="text-blue-500 font-bold uppercase text-[10px]">Editar</button>
-                            <button onclick="apagarLote('${d.id}')" class="text-red-500 font-bold uppercase text-[10px]">Apagar</button>
+                        <td class="p-4 font-mono text-blue-600">${d.peso} kg</td>
+                        <td class="p-4 text-[11px] text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td>
+                        <td class="p-4 flex gap-2">
+                            <button onclick="editarPeso('${d.id}', '${d.peso}')" class="text-blue-500 font-bold uppercase text-[9px]">Editar</button>
+                            <button onclick="apagarLote('${d.id}')" class="text-red-500 font-bold uppercase text-[9px]">Apagar</button>
                         </td>
                     </tr>
                 `;
@@ -170,15 +182,15 @@
                     listPicagem.innerHTML += `
                         <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
                             <div>
-                                <span class="block font-black text-slate-800">${d.id} <small class="text-slate-400">(${d.peso}kg)</small></span>
-                                <span class="text-[9px] text-slate-400 font-bold">Entrada: ${new Date(d.data_entrada).toLocaleDateString()}</span>
+                                <span class="block font-black text-slate-800">${d.id} <small class="text-slate-400 font-normal">(${d.peso}kg)</small></span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase">Entrada: ${new Date(d.data_entrada).toLocaleString()}</span>
                             </div>
                             <div>
                                 ${d.status === 'estoque' 
-                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase">Registar</button>`
+                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase shadow-md">Registar</button>`
                                     : `<div class="text-right">
-                                        <span class="text-emerald-600 font-black text-[10px] uppercase tracking-tighter italic">Consumido</span>
-                                        <button onclick="reverterPicagem('${d.id}')" class="block text-rose-500 text-[9px] underline">Reverter</button>
+                                        <span class="text-emerald-600 font-black text-[10px] uppercase italic">● Consumido</span>
+                                        <button onclick="reverterPicagem('${d.id}')" class="block text-rose-500 text-[9px] underline font-bold mt-1">Reverter</button>
                                        </div>`
                                 }
                             </div>
@@ -193,20 +205,19 @@
         }
 
         async function reverterPicagem(id) {
-            const pass = prompt("Senha para reverter:");
-            if(pass === SENHA_MESTRA) {
-                await zincoRef.doc(id).update({ data_picagem: null, status: 'estoque', ts_picagem: null });
-            } else { alert("Senha incorreta"); }
+            const pass = prompt("Senha para reverter para o stock:");
+            if(pass === SENHA_MESTRA) await zincoRef.doc(id).update({ data_picagem: null, status: 'estoque', ts_picagem: null });
+            else alert("Senha incorreta");
         }
 
         async function apagarLote(id) {
-            const pass = prompt(`Confirmar exclusão do lote ${id}:`);
+            const pass = prompt(`Apagar lote ${id}? Digite a senha:`);
             if(pass === SENHA_MESTRA) await zincoRef.doc(id).delete();
         }
 
         async function editarPeso(id, peso) {
             const n = prompt("Novo peso:", peso);
-            if(n) await zincoRef.doc(id).update({ peso: n });
+            if(n && !isNaN(n)) await zincoRef.doc(id).update({ peso: n });
         }
 
         function isToday(dateStr) {
@@ -223,10 +234,11 @@
                 const d = l.data_entrada.split('T')[0];
                 return (!inicio || d >= inicio) && (!fim || d <= fim);
             });
-            doc.setFontSize(16); doc.text("GAMIL - RELATÓRIO DE ZINCO", 14, 20);
-            const rows = dados.map(l => [l.id, l.peso + "kg", new Date(l.data_entrada).toLocaleDateString(), l.data_picagem ? new Date(l.data_picagem).toLocaleString() : 'STOCK', l.status.toUpperCase()]);
-            doc.autoTable({ head: [['Lote', 'Peso', 'Entrada', 'Consumo', 'Status']], body: rows, startY: 30, headStyles: { fillColor: [15, 23, 42] } });
-            doc.save(`relatorio_zinco.pdf`);
+            doc.setFontSize(16); doc.text("RELATÓRIO GAMIL - ZINCO", 14, 20);
+            doc.setFontSize(9); doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 28);
+            const rows = dados.map(l => [l.id, l.peso + "kg", new Date(l.data_entrada).toLocaleString(), l.data_picagem ? new Date(l.data_picagem).toLocaleString() : 'STOCK', l.status.toUpperCase()]);
+            doc.autoTable({ head: [['Lote', 'Peso', 'Data Entrada', 'Data Picagem', 'Status']], body: rows, startY: 35, headStyles: { fillColor: [15, 23, 42] } });
+            doc.save(`relatorio_gamil_zinco.pdf`);
         }
 
         function beep(f, d) { try { const c = new (window.AudioContext || window.webkitAudioContext)(); const o = c.createOscillator(); const g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; o.start(); setTimeout(() => o.stop(), d * 1000); } catch(e) {} }
@@ -237,7 +249,7 @@
                 const lote = todosOsLotes.find(l => l.id === id);
                 if(lote) {
                     if(lote.status === 'consumido') {
-                        showFeedback("⚠️ LOTE JÁ CONSUMIDO!", "bg-rose-900 border-2 border-white text-white");
+                        showFeedback("⚠️ JÁ CONSUMIDO!", "bg-rose-900 text-white");
                         beep(150, 0.7);
                     } else {
                         picarLote(id);
@@ -245,7 +257,7 @@
                         beep(600, 0.1);
                     }
                 } else {
-                    showFeedback("❌ NÃO EXISTE NO STOCK", "bg-rose-600 text-white");
+                    showFeedback("❌ NÃO ENCONTRADO", "bg-rose-600 text-white");
                     beep(150, 0.5);
                 }
                 e.target.value = "";
@@ -256,11 +268,6 @@
             const f = document.getElementById('pda-feedback');
             f.innerText = msg; f.className = `mt-4 p-4 rounded-xl text-center font-bold text-lg block ${color}`;
             setTimeout(() => f.classList.add('hidden'), 3000);
-        }
-
-        function editarPeso(id, peso) {
-            const n = prompt(`Novo peso para ${id}:`, peso);
-            if(n && !isNaN(n)) zincoRef.doc(id).update({ peso: n });
         }
     </script>
 </body>
