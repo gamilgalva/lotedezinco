@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Zinco v4.8 Master Control</title>
+    <title>Gamil | Controle de Entrada e Picagem de Zincol</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -83,7 +83,7 @@
             <div class="flex items-center gap-4">
                 <img src="logo.png" alt="Logo" class="h-10 object-contain bg-white rounded p-1">
                 <div>
-                    <h1 class="text-xl font-black text-blue-400 uppercase tracking-tighter leading-none">Gamil <span class="text-white">Logistics</span></h1>
+                    <h1 class="text-xl font-black text-blue-400 uppercase tracking-tighter leading-none">Gamil <span class="text-white">Controle de Zinco</span></h1>
                     <span id="logged-user-display" class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest italic">Sessão</span>
                 </div>
             </div>
@@ -185,20 +185,61 @@
     </main>
 
     <script>
-        const SENHA_MESTRA = "gamil2026";
-        let ID_CARGA_EDIT = null;
-        let ID_LOTE_EDIT = null;
+       <script>
+    // --- CONFIGURAÇÃO DE ACESSOS INDIVIDUAIS ---
+    const ACESSOS = {
+        "Hamilton Junior": "hamilton2026",
+        "José Pedro":      "jose2026",
+        "Carlos Meira":    "gamil2026",
+        "Produção":        "producao2026"
+    };
 
-        document.getElementById('c-data-chegada').valueAsDate = new Date();
+    // Senha usada para as funções de EDIT e DEL nas tabelas
+    const SENHA_MESTRA = "gamil2026"; 
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
-            authDomain: "lotezinco.firebaseapp.com",
-            projectId: "lotezinco",
-            storageBucket: "lotezinco.firebasestorage.app",
-            messagingSenderId: "797490873231",
-            appId: "1:797490873231:web:a0bd5cef82b5389ad01fa"
-        };
+    let ID_CARGA_EDIT = null;
+    let ID_LOTE_EDIT = null;
+
+    // --- FUNÇÃO DE LOGIN ATUALIZADA ---
+    function realizarLogin() {
+        const user = document.getElementById('user-select').value;
+        const pass = document.getElementById('user-pass').value;
+
+        if(!user) return alert("Selecione um utilizador!");
+        
+        // Verifica se a senha digitada bate com a senha do usuário escolhido
+        if(pass !== ACESSOS[user]) {
+            return alert("Senha incorreta para este utilizador!");
+        }
+
+        document.getElementById('login-overlay').classList.add('hidden');
+        document.getElementById('logged-user-display').innerText = `${user}`;
+
+        if(user === "Produção") {
+            // Remove acessos para produção
+            document.getElementById('tab-cargas').remove();
+            document.getElementById('tab-entrada').remove();
+            document.getElementById('tab-status').remove();
+            document.getElementById('sec-cargas').remove();
+            document.getElementById('sec-entrada').remove();
+            document.getElementById('sec-status').remove();
+            switchTab('picagem');
+        } else {
+            switchTab('cargas');
+        }
+    }
+
+    // Inicializa data
+    document.getElementById('c-data-chegada').valueAsDate = new Date();
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
+        authDomain: "lotezinco.firebaseapp.com",
+        projectId: "lotezinco",
+        storageBucket: "lotezinco.firebasestorage.app",
+        messagingSenderId: "797490873231",
+        appId: "1:797490873231:web:a0bd5cef82b5389ad01fa"
+    };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
