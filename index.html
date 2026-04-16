@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Zinco v4.7 Master Control</title>
+    <title>Gamil | Zinco v4.8 Master Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -102,7 +102,7 @@
     </header>
 
     <nav id="main-nav" class="bg-white border-b sticky top-[68px] z-40 shadow-sm overflow-x-auto whitespace-nowrap">
-        <div class="container mx-auto flex">
+        <div class="container mx-auto flex" id="nav-container">
             <button onclick="switchTab('cargas')" id="tab-cargas" class="px-6 py-4 text-xs font-bold uppercase tracking-widest tab-active">1. Cargas</button>
             <button onclick="switchTab('entrada')" id="tab-entrada" class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400">2. Lotes</button>
             <button onclick="switchTab('picagem')" id="tab-picagem" class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400 text-rose-500">3. Picagem</button>
@@ -110,7 +110,7 @@
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 py-6 max-w-4xl">
+    <main class="container mx-auto px-4 py-6 max-w-4xl" id="main-content">
 
         <section id="sec-cargas" class="space-y-4">
             <div id="form-carga" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 transition-all">
@@ -139,7 +139,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                     <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="ID LOTE">
                     <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 ring-blue-500" placeholder="PESO (KG)">
-                    <input type="text" id="in-guia-gamil" class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl font-bold uppercase outline-none focus:ring-2 ring-emerald-500" placeholder="GUIA GAMIL">
+                    <input type="text" id="in-guia-gamil" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl font-bold uppercase outline-none focus:ring-2 ring-emerald-500" placeholder="GUIA GAMIL">
                 </div>
                 <div class="flex gap-2">
                     <button id="btn-salvar-lote" onclick="salvarLote()" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl uppercase hover:bg-blue-700 shadow-xl transition-all">Registar Lote</button>
@@ -208,16 +208,27 @@
         let cargasLocais = [];
         let todosOsLotes = [];
 
+        // LÓGICA DE ACESSO BLOQUEADA (CORREÇÃO v4.8)
         function realizarLogin() {
             const user = document.getElementById('user-select').value;
             const pass = document.getElementById('user-pass').value;
+
             if(!user || pass !== SENHA_MESTRA) return alert("Acesso Negado!");
+
             document.getElementById('login-overlay').classList.add('hidden');
             document.getElementById('logged-user-display').innerText = `${user}`;
+
             if(user === "Produção") {
-                document.getElementById('tab-cargas').classList.add('hidden');
-                document.getElementById('tab-entrada').classList.add('hidden');
-                document.getElementById('tab-status').classList.add('hidden');
+                // Remove os botões do menu permanentemente para esta sessão
+                document.getElementById('tab-cargas').remove();
+                document.getElementById('tab-entrada').remove();
+                document.getElementById('tab-status').remove();
+                
+                // Remove as seções de código para evitar inspeção e acesso indevido
+                document.getElementById('sec-cargas').remove();
+                document.getElementById('sec-entrada').remove();
+                document.getElementById('sec-status').remove();
+
                 switchTab('picagem');
             } else {
                 switchTab('cargas');
@@ -225,17 +236,29 @@
         }
 
         function switchTab(tab) {
-            ['cargas', 'entrada', 'picagem', 'status'].forEach(t => {
-                document.getElementById(`sec-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400';
+            const abasPermitidas = ['cargas', 'entrada', 'picagem', 'status'];
+            abasPermitidas.forEach(t => {
+                const elSec = document.getElementById(`sec-${t}`);
+                const elTab = document.getElementById(`tab-${t}`);
+                if(elSec) elSec.classList.add('hidden');
+                if(elTab) elTab.className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400';
             });
-            document.getElementById(`sec-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest tab-active';
-            if(tab === 'picagem') setTimeout(() => document.getElementById('pda-scan').focus(), 200);
+
+            const targetSec = document.getElementById(`sec-${tab}`);
+            const targetTab = document.getElementById(`tab-${tab}`);
+            
+            if(targetSec) targetSec.classList.remove('hidden');
+            if(targetTab) targetTab.className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest tab-active';
+
+            if(tab === 'picagem') setTimeout(() => {
+                const scanInput = document.getElementById('pda-scan');
+                if(scanInput) scanInput.focus();
+            }, 200);
+            
             if(tab === 'status') renderizarHistorico();
         }
 
-        // --- ABA 1: GESTÃO DE CARGAS ---
+        // --- GESTÃO DE CARGAS ---
         async function salvarCarga() {
             const forn = document.getElementById('c-fornecedor').value.trim().toUpperCase();
             const cam = document.getElementById('c-caminhao').value.trim().toUpperCase();
@@ -283,6 +306,7 @@
             cargasLocais = [];
             const list = document.getElementById('lista-cargas-abertas');
             const sel = document.getElementById('select-carga-ativa');
+            if(!list || !sel) return;
             list.innerHTML = ""; sel.innerHTML = '<option value="">-- SELECIONE O CAMINHÃO --</option>';
             snap.forEach(doc => {
                 const c = doc.data();
@@ -305,7 +329,7 @@
             });
         });
 
-        // --- ABA 2: GESTÃO DE LOTES ---
+        // --- GESTÃO DE LOTES ---
         async function salvarLote() {
             const cid = document.getElementById('select-carga-ativa').value;
             const lid = document.getElementById('in-lote').value.trim().toUpperCase();
@@ -348,22 +372,25 @@
             todosOsLotes = []; let pT = 0; let lT = 0;
             const listE = document.getElementById('lista-lotes-entrada');
             const listP = document.getElementById('lista-picagem');
-            listE.innerHTML = ""; listP.innerHTML = "";
+            if(listE) listE.innerHTML = ""; 
+            if(listP) listP.innerHTML = "";
             snap.forEach(doc => {
                 const d = doc.data(); todosOsLotes.push(d);
                 if(d.status === 'estoque') { pT += d.peso; lT++; }
-                listE.innerHTML += `
-                    <tr>
-                        <td class="p-3 font-black">${d.id}</td>
-                        <td class="p-3 text-[10px] text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td>
-                        <td class="p-3 font-bold text-emerald-600">${d.guia_gamil}</td>
-                        <td class="p-3 font-bold text-center text-blue-700">${d.peso}kg</td>
-                        <td class="p-3 text-center flex gap-1 justify-center">
-                            <button onclick="editarLote('${d.id}')" class="text-blue-500 font-bold text-[9px] uppercase px-1 py-1 bg-slate-50 rounded">Edit</button>
-                            <button onclick="apagarLote('${d.id}')" class="text-rose-500 font-bold text-[9px] uppercase px-1 py-1 bg-slate-50 rounded">Del</button>
-                        </td>
-                    </tr>`;
-                if(d.status === 'estoque' || (d.status === 'consumido' && isToday(d.data_picagem))) {
+                if(listE) {
+                    listE.innerHTML += `
+                        <tr>
+                            <td class="p-3 font-black">${d.id}</td>
+                            <td class="p-3 text-[10px] text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td>
+                            <td class="p-3 font-bold text-emerald-600">${d.guia_gamil}</td>
+                            <td class="p-3 font-bold text-center text-blue-700">${d.peso}kg</td>
+                            <td class="p-3 text-center flex gap-1 justify-center">
+                                <button onclick="editarLote('${d.id}')" class="text-blue-500 font-bold text-[9px] uppercase px-1 py-1 bg-slate-50 rounded">Edit</button>
+                                <button onclick="apagarLote('${d.id}')" class="text-rose-500 font-bold text-[9px] uppercase px-1 py-1 bg-slate-50 rounded">Del</button>
+                            </td>
+                        </tr>`;
+                }
+                if(listP && (d.status === 'estoque' || (d.status === 'consumido' && isToday(d.data_picagem)))) {
                     listP.innerHTML += `
                         <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
                             <div><span class="block font-black text-slate-800 text-sm">${d.id} (${d.peso}kg)</span><span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">GUIA GAMIL: ${d.guia_gamil}</span></div>
@@ -385,6 +412,7 @@
 
         function renderizarHistorico() {
             const container = document.getElementById('resumo-diario');
+            if(!container) return;
             container.innerHTML = ""; const resumo = {};
             todosOsLotes.forEach(l => {
                 const dia = l.data_entrada.split('T')[0];
@@ -406,10 +434,13 @@
             doc.setFontSize(16); doc.text("GAMIL - RELATÓRIO DE ZINCO Master", 14, 20);
             const rows = dados.reverse().map((l, i) => [i + 1, l.id, l.fornecedor, l.guia_gamil, l.peso + "kg", new Date(l.data_entrada).toLocaleString(), l.status.toUpperCase()]);
             doc.autoTable({ head: [['Nº', 'Lote', 'Fornecedor', 'Guia Gamil', 'Peso', 'Entrada', 'Status']], body: rows, startY: 35, headStyles: { fillColor: [15, 23, 42] } });
-            doc.save(`relatorio_gamil_v4.7.pdf`);
+            doc.save(`relatorio_gamil_v4.8.pdf`);
         }
 
-        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString('pt-PT'); }, 1000);
+        setInterval(() => { 
+            const clockEl = document.getElementById('clock');
+            if(clockEl) clockEl.innerText = new Date().toLocaleString('pt-PT'); 
+        }, 1000);
 
         document.getElementById('pda-scan').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -422,7 +453,7 @@
                 } else {
                     f.innerText = lote ? "⚠️ JÁ CONSUMIDO" : "❌ NÃO ENCONTRADO"; f.classList.add('bg-rose-600');
                 }
-                e.target.value = ""; setTimeout(() => f.classList.add('hidden'), 3000);
+                e.target.value = ""; setTimeout(() => { if(f) f.classList.add('hidden'); }, 3000);
             }
         });
     </script>
