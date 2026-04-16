@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Zinco v4.5 Logistics Control</title>
+    <title>Gamil | Zinco v4.6 Master Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -55,8 +55,8 @@
     <div id="login-overlay" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md text-center">
             <img src="logo.png" alt="Gamil Logo" class="h-20 mx-auto mb-6 object-contain">
-            <h2 class="text-xl font-black text-slate-800 uppercase mb-2 tracking-tighter">Acesso Restrito</h2>
-            <p class="text-slate-400 text-[10px] font-bold mb-8 tracking-widest uppercase">Identifique-se para continuar</p>
+            <h2 class="text-xl font-black text-slate-800 uppercase mb-2 tracking-tighter">Sistema Gamil</h2>
+            <p class="text-slate-400 text-[10px] font-bold mb-8 tracking-widest uppercase">Controle de Logística de Zinco</p>
             
             <div class="space-y-4">
                 <select id="user-select" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold outline-none focus:border-blue-500 transition-all text-slate-700">
@@ -71,9 +71,9 @@
                     </optgroup>
                 </select>
                 
-                <input type="password" id="user-pass" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold outline-none focus:border-blue-500 transition-all" placeholder="SENHA DE ACESSO">
+                <input type="password" id="user-pass" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl font-bold outline-none focus:border-blue-500 transition-all" placeholder="SENHA">
                 
-                <button onclick="realizarLogin()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95">Entrar no Sistema</button>
+                <button onclick="realizarLogin()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase hover:bg-blue-700 shadow-xl transition-all">Entrar</button>
             </div>
         </div>
     </div>
@@ -84,23 +84,27 @@
                 <img src="logo.png" alt="Logo" class="h-10 object-contain bg-white rounded p-1">
                 <div>
                     <h1 class="text-xl font-black text-blue-400 uppercase tracking-tighter leading-none">Gamil <span class="text-white">Logistics</span></h1>
-                    <span id="logged-user-display" class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest italic">Aguardando login...</span>
+                    <span id="logged-user-display" class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest italic">Sessão</span>
                 </div>
             </div>
             <div class="flex gap-2">
                 <div class="bg-slate-800 px-3 py-1 rounded-xl border border-slate-700 text-center">
-                    <span class="block text-[7px] uppercase font-black text-slate-400 tracking-tighter">Stock Total</span>
+                    <span class="block text-[7px] uppercase font-black text-slate-400">Lotes</span>
+                    <span id="display-lotes-total" class="text-sm font-black text-blue-400">0</span>
+                </div>
+                <div class="bg-slate-800 px-3 py-1 rounded-xl border border-slate-700 text-center">
+                    <span class="block text-[7px] uppercase font-black text-slate-400">Stock</span>
                     <span id="display-ton" class="text-sm font-black text-emerald-400">0.000 t</span>
                 </div>
-                <button onclick="location.reload()" class="bg-slate-700 hover:bg-rose-600 p-2 rounded-xl text-[9px] font-black uppercase transition-colors">Sair</button>
+                <button onclick="location.reload()" class="bg-slate-700 p-2 rounded-xl text-[9px] font-black uppercase">Sair</button>
             </div>
         </div>
     </header>
 
     <nav id="main-nav" class="bg-white border-b sticky top-[68px] z-40 shadow-sm overflow-x-auto whitespace-nowrap">
         <div class="container mx-auto flex">
-            <button onclick="switchTab('cargas')" id="tab-cargas" class="px-6 py-4 text-xs font-bold uppercase tracking-widest tab-active">1. Receber Carga</button>
-            <button onclick="switchTab('entrada')" id="tab-entrada" class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400">2. Inserir Lotes</button>
+            <button onclick="switchTab('cargas')" id="tab-cargas" class="px-6 py-4 text-xs font-bold uppercase tracking-widest tab-active">1. Cargas</button>
+            <button onclick="switchTab('entrada')" id="tab-entrada" class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400">2. Lotes</button>
             <button onclick="switchTab('picagem')" id="tab-picagem" class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400 text-rose-500">3. Picagem</button>
             <button onclick="switchTab('status')" id="tab-status" class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400 text-blue-600 font-black">4. Histórico</button>
         </div>
@@ -109,32 +113,39 @@
     <main class="container mx-auto px-4 py-6 max-w-4xl">
 
         <section id="sec-cargas" class="space-y-4">
-            <div id="form-carga" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
-                <h3 class="text-xs font-black mb-4 uppercase text-slate-500 italic text-center tracking-widest">Identificação do Veículo</h3>
+            <div id="form-carga" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 transition-all">
+                <h3 class="text-xs font-black mb-4 uppercase text-slate-500 italic text-center tracking-widest">Entrada de Veículo</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     <input type="text" id="c-fornecedor" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="FORNECEDOR">
                     <input type="text" id="c-caminhao" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="PLACA">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                    <input type="text" id="c-guia" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="GUIA FORNECEDOR">
-                    <input type="number" step="0.001" id="c-toneladas" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none" placeholder="TONS PREVISTAS">
+                    <input type="text" id="c-guia" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="GUIA FORN.">
+                    <input type="number" step="0.001" id="c-toneladas" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none" placeholder="TONELADAS">
                     <input type="date" id="c-data-chegada" class="p-3 bg-blue-50 border rounded-xl font-bold text-xs outline-none">
                 </div>
-                <button onclick="salvarCarga()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase hover:bg-blue-700 shadow-lg transition-all">Abrir Recebimento de Carga</button>
+                <div class="flex gap-2">
+                    <button id="btn-salvar-carga" onclick="salvarCarga()" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl uppercase">Abrir Recebimento</button>
+                    <button id="btn-update-carga" onclick="confirmarEdicaoCarga()" class="hidden flex-1 bg-emerald-600 text-white font-black py-4 rounded-xl uppercase">Atualizar Carga</button>
+                    <button id="btn-cancel-carga" onclick="cancelarEdicaoCarga()" class="hidden flex-1 bg-slate-400 text-white font-black py-4 rounded-xl uppercase">Cancelar</button>
+                </div>
             </div>
             <div id="lista-cargas-abertas" class="space-y-3"></div>
         </section>
 
         <section id="sec-entrada" class="hidden space-y-4">
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
-                <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Vincular a:</label>
+            <div id="card-lotes" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
                 <select id="select-carga-ativa" class="w-full p-3 bg-blue-50 border-2 border-blue-200 rounded-xl font-bold mb-4 outline-none"></select>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                    <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="ID LOTE">
-                    <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none" placeholder="PESO (KG)">
+                    <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="ID LOTE">
+                    <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 ring-blue-500" placeholder="PESO (KG)">
                     <input type="text" id="in-guia-gamil" class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl font-bold uppercase outline-none" placeholder="GUIA GAMIL">
                 </div>
-                <button onclick="salvarLote()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase hover:bg-blue-700 shadow-xl transition-all">Registar Entrada no Stock</button>
+                <div class="flex gap-2">
+                    <button id="btn-salvar-lote" onclick="salvarLote()" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl uppercase">Registar Lote</button>
+                    <button id="btn-update-lote" onclick="confirmarEdicaoLote()" class="hidden flex-1 bg-emerald-600 text-white font-black py-4 rounded-xl uppercase">Atualizar Lote</button>
+                    <button id="btn-cancel-lote" onclick="cancelarEdicaoLote()" class="hidden flex-1 bg-slate-400 text-white font-black py-4 rounded-xl uppercase">Sair</button>
+                </div>
             </div>
             <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200">
                 <table class="w-full text-left text-xs font-mono">
@@ -142,7 +153,6 @@
                         <tr>
                             <th class="p-3 uppercase text-slate-400">Lote</th>
                             <th class="p-3 uppercase text-slate-400">Data Carga</th>
-                            <th class="p-3 uppercase text-slate-400">Guia</th>
                             <th class="p-3 text-center uppercase text-slate-400">Peso</th>
                             <th class="p-3 text-center uppercase text-slate-400">Acção</th>
                         </tr>
@@ -154,19 +164,19 @@
 
         <section id="sec-picagem" class="hidden space-y-4">
             <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border-b-4 border-blue-500 text-center">
-                <input type="text" id="pda-scan" class="w-full p-4 text-3xl text-center font-black bg-white rounded-xl uppercase text-slate-900 focus:ring-4 ring-blue-500 outline-none" placeholder="SCANNER PDA">
+                <input type="text" id="pda-scan" class="w-full p-4 text-3xl text-center font-black bg-white rounded-xl uppercase text-slate-900 outline-none" placeholder="SCANNER PDA">
                 <div id="pda-feedback" class="hidden mt-4 p-4 rounded-xl text-center font-bold text-lg"></div>
             </div>
             <div id="lista-picagem" class="space-y-3"></div>
         </section>
 
-        <section id="sec-status" class="hidden space-y-6">
+        <section id="sec-status" class="hidden space-y-4">
             <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 text-center">
                 <div class="grid grid-cols-2 gap-4 mb-4">
-                    <input type="date" id="filtro-inicio" class="p-3 border rounded-xl bg-slate-50 font-bold outline-none">
-                    <input type="date" id="filtro-fim" class="p-3 border rounded-xl bg-slate-50 font-bold outline-none">
+                    <input type="date" id="filtro-inicio" class="p-3 border rounded-xl bg-slate-50 font-bold">
+                    <input type="date" id="filtro-fim" class="p-3 border rounded-xl bg-slate-50 font-bold">
                 </div>
-                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase hover:bg-black shadow-lg transition-all">📄 Exportar Relatório PDF</button>
+                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase">Gerar Relatório PDF</button>
             </div>
             <div id="resumo-diario" class="space-y-4"></div>
         </section>
@@ -175,11 +185,11 @@
 
     <script>
         const SENHA_MESTRA = "gamil2026";
-        let CURRENT_USER = null;
+        let ID_CARGA_EDIT = null;
+        let ID_LOTE_EDIT = null;
 
         document.getElementById('c-data-chegada').valueAsDate = new Date();
 
-        // CONFIGURAÇÃO FIREBASE (CONFORME IMAGEM)
         const firebaseConfig = {
             apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
             authDomain: "lotezinco.firebaseapp.com",
@@ -197,18 +207,12 @@
         let cargasLocais = [];
         let todosOsLotes = [];
 
-        // LÓGICA DE ACESSO
         function realizarLogin() {
             const user = document.getElementById('user-select').value;
             const pass = document.getElementById('user-pass').value;
-
-            if(!user || !pass) return alert("Preencha todos os campos!");
-            if(pass !== SENHA_MESTRA) return alert("Senha de acesso incorreta!");
-
-            CURRENT_USER = user;
+            if(!user || pass !== SENHA_MESTRA) return alert("Erro de acesso!");
             document.getElementById('login-overlay').classList.add('hidden');
-            document.getElementById('logged-user-display').innerText = `Logado como: ${user}`;
-
+            document.getElementById('logged-user-display').innerText = `Logado: ${user}`;
             if(user === "Produção") {
                 document.getElementById('tab-cargas').classList.add('hidden');
                 document.getElementById('tab-entrada').classList.add('hidden');
@@ -220,145 +224,135 @@
         }
 
         function switchTab(tab) {
-            const abas = ['cargas', 'entrada', 'picagem', 'status'];
-            abas.forEach(t => {
+            ['cargas', 'entrada', 'picagem', 'status'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400 transition-all';
+                document.getElementById(`tab-${t}`).className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-400';
             });
             document.getElementById(`sec-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest tab-active transition-all';
-            
+            document.getElementById(`tab-${tab}`).className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest tab-active';
             if(tab === 'picagem') setTimeout(() => document.getElementById('pda-scan').focus(), 200);
             if(tab === 'status') renderizarHistorico();
         }
 
-        // --- ABA 1: GESTÃO DE CARGAS ---
+        // --- GESTÃO DE CARGAS ---
         async function salvarCarga() {
             const forn = document.getElementById('c-fornecedor').value.trim().toUpperCase();
             const cam = document.getElementById('c-caminhao').value.trim().toUpperCase();
             const guia = document.getElementById('c-guia').value.trim().toUpperCase();
             const tons = document.getElementById('c-toneladas').value || 0;
             const data = document.getElementById('c-data-chegada').value;
-
-            if(!forn || !cam || !guia || !data) return alert("Dados incompletos!");
-
+            if(!forn || !cam || !guia) return alert("Faltam dados!");
             const cid = `CARGA-${Date.now()}`;
-            await cargasRef.doc(cid).set({
-                id: cid, fornecedor: forn, caminhao: cam, guia: guia,
-                toneladas_declaradas: parseFloat(tons), status: 'aberta', 
-                ts: Date.now(), data_chegada: data 
-            });
-
-            document.getElementById('c-fornecedor').value = "";
-            document.getElementById('c-caminhao').value = "";
-            document.getElementById('c-guia').value = "";
-            document.getElementById('c-toneladas').value = "";
+            await cargasRef.doc(cid).set({ id: cid, fornecedor: forn, caminhao: cam, guia: guia, toneladas_declaradas: parseFloat(tons), status: 'aberta', ts: Date.now(), data_chegada: data });
+            limparFormCarga();
         }
+
+        function editarCarga(id) {
+            if(prompt("Senha:") !== SENHA_MESTRA) return;
+            const c = cargasLocais.find(x => x.id === id);
+            ID_CARGA_EDIT = id;
+            document.getElementById('c-fornecedor').value = c.fornecedor;
+            document.getElementById('c-caminhao').value = c.caminhao;
+            document.getElementById('c-guia').value = c.guia;
+            document.getElementById('c-toneladas').value = c.toneladas_declaradas;
+            document.getElementById('c-data-chegada').value = c.data_chegada;
+            document.getElementById('btn-salvar-carga').classList.add('hidden');
+            document.getElementById('btn-update-carga').classList.remove('hidden');
+            document.getElementById('btn-cancel-carga').classList.remove('hidden');
+            document.getElementById('form-carga').classList.add('edit-mode');
+        }
+
+        async function confirmarEdicaoCarga() {
+            await cargasRef.doc(ID_CARGA_EDIT).update({
+                fornecedor: document.getElementById('c-fornecedor').value.toUpperCase(),
+                caminhao: document.getElementById('c-caminhao').value.toUpperCase(),
+                guia: document.getElementById('c-guia').value.toUpperCase(),
+                toneladas_declaradas: parseFloat(document.getElementById('c-toneladas').value),
+                data_chegada: document.getElementById('c-data-chegada').value
+            });
+            cancelarEdicaoCarga();
+        }
+
+        function cancelarEdicaoCarga() { ID_CARGA_EDIT = null; limparFormCarga(); document.getElementById('btn-salvar-carga').classList.remove('hidden'); document.getElementById('btn-update-carga').classList.add('hidden'); document.getElementById('btn-cancel-carga').classList.add('hidden'); document.getElementById('form-carga').classList.remove('edit-mode'); }
+
+        function limparFormCarga() { document.getElementById('c-fornecedor').value = ""; document.getElementById('c-caminhao').value = ""; document.getElementById('c-guia').value = ""; document.getElementById('c-toneladas').value = ""; document.getElementById('c-data-chegada').valueAsDate = new Date(); }
 
         cargasRef.orderBy('ts', 'desc').onSnapshot(snap => {
             cargasLocais = [];
             const list = document.getElementById('lista-cargas-abertas');
             const sel = document.getElementById('select-carga-ativa');
-            list.innerHTML = ""; 
-            sel.innerHTML = '<option value="">-- SELECIONE A CARGA DE DESTINO --</option>';
-
+            list.innerHTML = ""; sel.innerHTML = '<option value="">-- SELECIONE A CARGA --</option>';
             snap.forEach(doc => {
                 const c = doc.data();
                 if(c.status === 'aberta') {
                     cargasLocais.push(c);
-                    sel.innerHTML += `<option value="${c.id}">${c.fornecedor} | GUIA: ${c.guia} (${c.caminhao})</option>`;
-                    list.innerHTML += `
-                        <div class="p-4 bg-white rounded-xl shadow-sm border border-slate-200 card-active flex justify-between items-center">
-                            <div>
-                                <span class="block text-blue-600 font-black text-xs uppercase">${c.fornecedor}</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase">Caminhão: ${c.caminhao} | Chegada: ${new Date(c.data_chegada).toLocaleDateString()}</span>
-                                <span class="block text-[10px] font-black text-emerald-600 uppercase tracking-tighter">${c.toneladas_declaradas.toFixed(3)} toneladas</span>
-                            </div>
-                            <button onclick="apagarCarga('${c.id}')" class="text-rose-500 font-black text-[9px] uppercase hover:underline">Fechar</button>
-                        </div>`;
+                    sel.innerHTML += `<option value="${c.id}">${c.fornecedor} | GUIA: ${c.guia}</option>`;
+                    list.innerHTML += `<div class="p-4 bg-white rounded-xl shadow-sm border border-slate-200 card-active flex justify-between items-center"><div><span class="block text-blue-600 font-black text-xs uppercase">${c.fornecedor}</span><span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Caminhão: ${c.caminhao} | Prev: ${c.toneladas_declaradas}t</span></div><div class="flex gap-2"><button onclick="editarCarga('${c.id}')" class="text-blue-500 font-bold text-[9px] uppercase">Edit</button><button onclick="apagarCarga('${c.id}')" class="text-rose-500 font-bold text-[9px] uppercase">Del</button></div></div>`;
                 }
             });
         });
 
-        // --- ABA 2: GESTÃO DE LOTES ---
+        // --- GESTÃO DE LOTES ---
         async function salvarLote() {
             const cid = document.getElementById('select-carga-ativa').value;
             const lid = document.getElementById('in-lote').value.trim().toUpperCase();
             const peso = document.getElementById('in-peso').value;
             const ggamil = document.getElementById('in-guia-gamil').value.trim().toUpperCase();
-
-            if(!cid || !lid || !peso || !ggamil) return alert("Campos obrigatórios vazios!");
-            if(todosOsLotes.find(x => x.id === lid)) return alert("Este Lote já foi registado no sistema!");
-
+            if(!cid || !lid || !peso) return alert("Campos vazios!");
             const carga = cargasLocais.find(x => x.id === cid);
-            const dataFinal = new Date(carga.data_chegada);
-            const agora = new Date();
-            dataFinal.setHours(agora.getHours(), agora.getMinutes(), agora.getSeconds());
-
-            await lotesRef.doc(lid).set({
-                id: lid, peso: parseFloat(peso), carga_id: cid, fornecedor: carga.fornecedor,
-                caminhao: carga.caminhao, guia_fornecedor: carga.guia, guia_gamil: ggamil,
-                data_entrada: dataFinal.toISOString(), ts_entrada: dataFinal.getTime(), status: 'estoque', data_picagem: null
-            });
-
-            document.getElementById('in-lote').value = ""; 
-            document.getElementById('in-peso').value = "";
+            const dFinal = new Date(carga.data_chegada); const agora = new Date();
+            dFinal.setHours(agora.getHours(), agora.getMinutes(), agora.getSeconds());
+            await lotesRef.doc(lid).set({ id: lid, peso: parseFloat(peso), carga_id: cid, fornecedor: carga.fornecedor, guia_gamil: ggamil, data_entrada: dFinal.toISOString(), ts_entrada: dFinal.getTime(), status: 'estoque' });
+            document.getElementById('in-lote').value = ""; document.getElementById('in-peso').value = "";
         }
 
+        function editarLote(id) {
+            if(prompt("Senha:") !== SENHA_MESTRA) return;
+            const l = todosOsLotes.find(x => x.id === id);
+            ID_LOTE_EDIT = id;
+            document.getElementById('select-carga-ativa').value = l.carga_id;
+            document.getElementById('in-lote').value = l.id;
+            document.getElementById('in-peso').value = l.peso;
+            document.getElementById('in-guia-gamil').value = l.guia_gamil;
+            document.getElementById('btn-salvar-lote').classList.add('hidden');
+            document.getElementById('btn-update-lote').classList.remove('hidden');
+            document.getElementById('btn-cancel-lote').classList.remove('hidden');
+            document.getElementById('card-lotes').classList.add('edit-mode');
+        }
+
+        async function confirmarEdicaoLote() {
+            const novoId = document.getElementById('in-lote').value.trim().toUpperCase();
+            const d = { id: novoId, peso: parseFloat(document.getElementById('in-peso').value), guia_gamil: document.getElementById('in-guia-gamil').value.toUpperCase() };
+            if(novoId !== ID_LOTE_EDIT) await lotesRef.doc(ID_LOTE_EDIT).delete();
+            await lotesRef.doc(novoId).set(d, { merge: true });
+            cancelarEdicaoLote();
+        }
+
+        function cancelarEdicaoLote() { ID_LOTE_EDIT = null; document.getElementById('in-lote').value = ""; document.getElementById('in-peso').value = ""; document.getElementById('in-guia-gamil').value = ""; document.getElementById('btn-salvar-lote').classList.remove('hidden'); document.getElementById('btn-update-lote').classList.add('hidden'); document.getElementById('btn-cancel-lote').classList.add('hidden'); document.getElementById('card-lotes').classList.remove('edit-mode'); }
+
         lotesRef.orderBy('ts_entrada', 'desc').onSnapshot(snap => {
-            todosOsLotes = [];
-            let pesoTotalStock = 0;
+            todosOsLotes = []; let pTotal = 0; let lTotal = 0;
             const listE = document.getElementById('lista-lotes-entrada');
             const listP = document.getElementById('lista-picagem');
             listE.innerHTML = ""; listP.innerHTML = "";
-
             snap.forEach(doc => {
-                const d = doc.data(); 
-                todosOsLotes.push(d);
-                if(d.status === 'estoque') pesoTotalStock += d.peso;
-
-                listE.innerHTML += `
-                    <tr>
-                        <td class="p-3 font-black text-slate-800">${d.id}</td>
-                        <td class="p-3 text-[10px] text-slate-400">${new Date(d.data_entrada).toLocaleString()}</td>
-                        <td class="p-3 font-bold text-emerald-600">${d.guia_gamil}</td>
-                        <td class="p-3 font-bold text-center text-blue-700">${d.peso}kg</td>
-                        <td class="p-3 text-center">
-                            <button onclick="apagarLote('${d.id}')" class="text-rose-500 text-[9px] font-black uppercase">DEL</button>
-                        </td>
-                    </tr>`;
-
+                const d = doc.data(); todosOsLotes.push(d);
+                if(d.status === 'estoque') { pTotal += d.peso; lTotal++; }
+                listE.innerHTML += `<tr><td class="p-3 font-black">${d.id}</td><td class="p-3 text-[10px] text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td><td class="p-3 font-bold text-center text-blue-700">${d.peso}kg</td><td class="p-3 text-center flex gap-2 justify-center"><button onclick="editarLote('${d.id}')" class="text-blue-500 font-bold text-[9px] uppercase">Edit</button><button onclick="apagarLote('${d.id}')" class="text-rose-500 font-bold text-[9px] uppercase">Del</button></td></tr>`;
                 if(d.status === 'estoque' || (d.status === 'consumido' && isToday(d.data_picagem))) {
-                    listP.innerHTML += `
-                        <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
-                            <div>
-                                <span class="block font-black text-slate-800 text-sm">${d.id} (${d.peso}kg)</span>
-                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">GUIA: ${d.guia_gamil}</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                ${d.status === 'estoque' 
-                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase shadow-md">Picar</button>`
-                                    : `<button onclick="reverterPicagem('${d.id}')" class="text-rose-500 text-[9px] font-bold underline">Reverter</button>`
-                                }
-                            </div>
-                        </div>`;
+                    listP.innerHTML += `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm"><div><span class="block font-black text-slate-800 text-sm">${d.id} (${d.peso}kg)</span><span class="text-[9px] text-slate-400 font-bold uppercase">GUIA GAMIL: ${d.guia_gamil}</span></div><div>${d.status === 'estoque' ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase">Picar</button>` : `<button onclick="reverterPicagem('${d.id}')" class="text-rose-500 text-[9px] font-bold underline">Reverter</button>`}</div></div>`;
                 }
             });
-            document.getElementById('display-ton').innerText = (pesoTotalStock / 1000).toFixed(3) + " t";
+            document.getElementById('display-ton').innerText = (pTotal / 1000).toFixed(3) + " t";
+            document.getElementById('display-lotes-total').innerText = lTotal;
         });
 
-        // --- SEGURANÇA E ACÇÕES ---
-        async function apagarCarga(id) { if(prompt("Senha de Segurança:") === SENHA_MESTRA) await cargasRef.doc(id).delete(); }
-        async function apagarLote(id) { if(prompt("Senha de Segurança:") === SENHA_MESTRA) await lotesRef.doc(id).delete(); }
+        async function apagarCarga(id) { if(prompt("Senha:") === SENHA_MESTRA) await cargasRef.doc(id).delete(); }
+        async function apagarLote(id) { if(prompt("Senha:") === SENHA_MESTRA) await lotesRef.doc(id).delete(); }
         async function picarLote(id) { await lotesRef.doc(id).update({ data_picagem: new Date().toISOString(), status: 'consumido' }); }
-        async function reverterPicagem(id) { if(prompt("Senha de Segurança:") === SENHA_MESTRA) await lotesRef.doc(id).update({ data_picagem: null, status: 'estoque' }); }
-        
-        function isToday(dateStr) { 
-            if(!dateStr) return false;
-            return new Date(dateStr).toDateString() === new Date().toDateString(); 
-        }
+        async function reverterPicagem(id) { if(prompt("Senha:") === SENHA_MESTRA) await lotesRef.doc(id).update({ data_picagem: null, status: 'estoque' }); }
+        function isToday(dateStr) { return dateStr && new Date(dateStr).toDateString() === new Date().toDateString(); }
 
-        // --- HISTÓRICO E PDF ---
         function renderizarHistorico() {
             const container = document.getElementById('resumo-diario');
             container.innerHTML = ""; const resumo = {};
@@ -370,16 +364,7 @@
             });
             Object.keys(resumo).sort().reverse().forEach(ch => {
                 const r = resumo[ch];
-                container.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-2">
-                        <div class="flex justify-between border-b pb-2 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            <span>DIA: ${new Date(r.dia).toLocaleDateString()}</span><span>GUIA GAMIL: ${r.guia}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div><span class="block text-xs font-black text-blue-600 uppercase">${r.fornecedor}</span><span class="text-[9px] font-bold text-slate-500">${r.qtd} Lotes recebidos</span></div>
-                            <span class="text-xl font-black text-slate-800">${(r.peso/1000).toFixed(3)}t</span>
-                        </div>
-                    </div>`;
+                container.innerHTML += `<div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-2"><div class="flex justify-between border-b pb-1 mb-2 text-[10px] font-bold text-slate-400"><span>DATA CARGA: ${new Date(r.dia).toLocaleDateString()}</span><span>GAMIL: ${r.guia}</span></div><div class="flex justify-between items-center"><div><span class="block text-xs font-black text-blue-600 uppercase">${r.fornecedor}</span><span class="text-[9px] font-bold text-slate-500">${r.qtd} LOTES</span></div><span class="text-xl font-black text-slate-800">${(r.peso/1000).toFixed(3)}t</span></div></div>`;
             });
         }
 
@@ -388,10 +373,10 @@
             const inicio = document.getElementById('filtro-inicio').value;
             const fim = document.getElementById('filtro-fim').value;
             const dados = todosOsLotes.filter(l => { const d = l.data_entrada.split('T')[0]; return (!inicio || d >= inicio) && (!fim || d <= fim); });
-            doc.setFontSize(16); doc.text("GAMIL - RELATÓRIO DE GESTÃO DE ZINCO", 14, 20);
-            const rows = dados.reverse().map((l, i) => [i + 1, l.id, l.fornecedor, l.guia_fornecedor, l.guia_gamil, l.peso + "kg", new Date(l.data_entrada).toLocaleString(), l.status.toUpperCase()]);
-            doc.autoTable({ head: [['Nº', 'Lote', 'Fornecedor', 'Guia Forn.', 'Guia Gamil', 'Peso', 'Data Entrada', 'Status']], body: rows, startY: 35, headStyles: { fillColor: [15, 23, 42] } });
-            doc.save(`gamil_logistics_v4.5.pdf`);
+            doc.setFontSize(16); doc.text("GAMIL - RELATÓRIO DE ZINCO Master", 14, 20);
+            const rows = dados.reverse().map((l, i) => [i + 1, l.id, l.fornecedor, l.guia_gamil, l.peso + "kg", new Date(l.data_entrada).toLocaleString(), l.status.toUpperCase()]);
+            doc.autoTable({ head: [['Nº', 'Lote', 'Fornecedor', 'Guia Gamil', 'Peso', 'Entrada', 'Status']], body: rows, startY: 35, headStyles: { fillColor: [15, 23, 42] } });
+            doc.save(`gamil_logistics_v4.6.pdf`);
         }
 
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString('pt-PT'); }, 1000);
@@ -405,7 +390,7 @@
                 if (lote && lote.status === 'estoque') {
                     picarLote(id); f.innerText = "✅ REGISTADO: " + id; f.classList.add('bg-emerald-600');
                 } else {
-                    f.innerText = lote ? "⚠️ JÁ CONSUMIDO" : "❌ NÃO EXISTE"; f.classList.add('bg-rose-600');
+                    f.innerText = lote ? "⚠️ JÁ CONSUMIDO" : "❌ NÃO ENCONTRADO"; f.classList.add('bg-rose-600');
                 }
                 e.target.value = ""; setTimeout(() => f.classList.add('hidden'), 3000);
             }
