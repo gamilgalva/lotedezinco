@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Zinco v4.0 Logistics Pro</title>
+    <title>Gamil | Zinco v4.1 Logistics Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -12,23 +12,28 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #f1f5f9; 
         }
+
         .tab-active { 
             border-bottom: 4px solid #3b82f6; 
             color: #1e40af; 
             font-weight: 800; 
         }
+
         .card-active { 
             border-left: 6px solid #3b82f6; 
             background-color: #f0f9ff; 
         }
+
         .error-shake { 
             animation: shake 0.4s; 
             border: 2px solid #ef4444 !important; 
         }
+
         @keyframes shake { 
             0%, 100% { transform: translateX(0); } 
             25% { transform: translateX(-8px); } 
@@ -67,10 +72,13 @@
         <section id="sec-cargas" class="space-y-4">
             <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
                 <h3 class="text-xs font-black mb-4 uppercase text-slate-500 tracking-widest italic">Passo 1: Identificar a Carga</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     <input type="text" id="c-fornecedor" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="NOME DO FORNECEDOR">
                     <input type="text" id="c-caminhao" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="PLACA/ID CAMINHÃO">
-                    <input type="text" id="c-guia" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="Nº DA GUIA / DOC">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <input type="text" id="c-guia" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="Nº DA GUIA FORNECEDOR">
+                    <input type="number" step="0.001" id="c-toneladas" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="QTD TOTAL (TONELADAS)">
                 </div>
                 <button onclick="salvarCarga()" class="w-full bg-blue-600 text-white font-black py-3 rounded-xl uppercase hover:bg-blue-700 transition-all shadow-lg">Abrir Recebimento para esta Carga</button>
             </div>
@@ -91,9 +99,12 @@
                     </select>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="CÓDIGO DO LOTE">
-                    <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 ring-blue-500" placeholder="PESO (KG)">
+                    <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 ring-blue-500" placeholder="PESO DO LOTE (KG)">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <input type="text" id="in-guia-gamil" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl font-bold uppercase outline-none" placeholder="Nº GUIA ENTRADA GAMIL">
                     <button onclick="salvarLote()" class="bg-blue-600 text-white font-bold rounded-xl py-3 uppercase hover:bg-blue-700 transition-all shadow-xl">Adicionar Lote</button>
                 </div>
                 <div id="entrada-error" class="hidden mt-3 text-rose-600 text-[10px] font-bold uppercase text-center animate-bounce">⚠️ Erro: Verifique os campos ou se o lote já existe!</div>
@@ -104,7 +115,7 @@
                     <thead class="bg-slate-50 border-b">
                         <tr>
                             <th class="p-3 font-bold text-slate-400 uppercase">Lote</th>
-                            <th class="p-3 font-bold text-slate-400 uppercase">Origem da Carga</th>
+                            <th class="p-3 font-bold text-slate-400 uppercase">Carga / Guia Gamil</th>
                             <th class="p-3 font-bold text-slate-400 uppercase text-center">Peso</th>
                             <th class="p-3 text-center font-bold text-slate-400 uppercase">Ações</th>
                         </tr>
@@ -131,8 +142,7 @@
                 <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase shadow-lg hover:bg-black transition-all">📄 Gerar Relatório PDF Numerado</button>
             </div>
             
-            <div id="resumo-diario" class="space-y-4">
-                </div>
+            <div id="resumo-diario" class="space-y-4"></div>
         </section>
 
     </main>
@@ -140,7 +150,6 @@
     <script>
         const SENHA_MESTRA = "gamil2026";
         
-        // --- CONFIGURAÇÃO FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
             authDomain: "lotezinco.firebaseapp.com",
@@ -158,7 +167,6 @@
         let cargasAtivas = [];
         let todosOsLotes = [];
 
-        // --- NAVEGAÇÃO ENTRE ABAS ---
         function switchTab(tab) {
             const abas = ['cargas', 'entrada', 'picagem', 'status'];
             abas.forEach(t => {
@@ -172,11 +180,11 @@
             if(tab === 'status') renderizarHistorico();
         }
 
-        // --- GESTÃO DE CARGAS (CAMINHÕES) ---
         async function salvarCarga() {
             const fornecedor = document.getElementById('c-fornecedor').value.trim().toUpperCase();
             const caminhao = document.getElementById('c-caminhao').value.trim().toUpperCase();
             const guia = document.getElementById('c-guia').value.trim().toUpperCase();
+            const toneladas = document.getElementById('c-toneladas').value || 0;
 
             if(!fornecedor || !caminhao || !guia) {
                 alert("Por favor, preencha todos os dados da carga!");
@@ -190,6 +198,7 @@
                 fornecedor: fornecedor,
                 caminhao: caminhao,
                 guia: guia,
+                toneladas_declaradas: parseFloat(toneladas),
                 data_chegada: new Date().toISOString(),
                 timestamp: Date.now(),
                 status: 'aberta'
@@ -198,6 +207,7 @@
             document.getElementById('c-fornecedor').value = "";
             document.getElementById('c-caminhao').value = "";
             document.getElementById('c-guia').value = "";
+            document.getElementById('c-toneladas').value = "";
         }
 
         cargasRef.orderBy('timestamp', 'desc').onSnapshot(snap => {
@@ -215,32 +225,31 @@
                     select.innerHTML += `<option value="${c.id}">${c.fornecedor} | GUIA: ${c.guia} (${c.caminhao})</option>`;
                     
                     container.innerHTML += `
-                        <div class="p-4 bg-white rounded-xl shadow-sm border border-slate-200 card-active flex justify-between items-center animate-fade-in">
+                        <div class="p-4 bg-white rounded-xl shadow-sm border border-slate-200 card-active flex justify-between items-center">
                             <div>
                                 <span class="block text-blue-600 font-black text-xs uppercase">${c.fornecedor}</span>
                                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Caminhão: ${c.caminhao} | Guia: ${c.guia}</span>
-                                <span class="block text-[8px] opacity-50 italic">Chegada: ${new Date(c.data_chegada).toLocaleString()}</span>
+                                <span class="block text-[10px] font-black text-emerald-600 uppercase italic">Carga Prevista: ${c.toneladas_declaradas.toFixed(3)} t</span>
                             </div>
-                            <button onclick="apagarCarga('${c.id}')" class="text-rose-500 font-bold text-[9px] uppercase hover:underline">Apagar Carga</button>
+                            <button onclick="apagarCarga('${c.id}')" class="text-rose-500 font-bold text-[9px] uppercase hover:underline">Fechar Carga</button>
                         </div>`;
                 }
             });
         });
 
-        // --- GESTÃO DE LOTES (STOCK) ---
         async function salvarLote() {
             const cargaId = document.getElementById('select-carga-ativa').value;
             const loteId = document.getElementById('in-lote').value.trim().toUpperCase();
             const peso = document.getElementById('in-peso').value;
+            const guiaGamil = document.getElementById('in-guia-gamil').value.trim().toUpperCase();
 
-            if(!cargaId || !loteId || !peso) {
-                alert("Selecione a carga primeiro e preencha o Lote e Peso!");
+            if(!cargaId || !loteId || !peso || !guiaGamil) {
+                alert("Erro: Selecione a Carga e preencha Lote, Peso e Guia Gamil!");
                 return;
             }
 
-            // Verifica se o lote já existe para evitar duplicados
             if(todosOsLotes.find(l => l.id === loteId)) {
-                alert("Este Lote já foi registado no sistema!");
+                alert("Atenção: Este Lote já foi registado anteriormente!");
                 return;
             }
 
@@ -252,7 +261,8 @@
                 carga_id: cargaId,
                 fornecedor: carga.fornecedor,
                 caminhao: carga.caminhao,
-                guia: carga.guia,
+                guia_fornecedor: carga.guia,
+                guia_gamil: guiaGamil,
                 data_entrada: new Date().toISOString(),
                 ts_entrada: Date.now(),
                 status: 'estoque',
@@ -275,38 +285,35 @@
             snap.forEach(doc => {
                 const d = doc.data();
                 todosOsLotes.push(d);
-
                 if(d.status === 'estoque') {
                     pesoTotalEstoque += d.peso;
                 }
 
-                // Tabela da Aba 2
                 listaEntrada.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr>
                         <td class="p-3 font-black text-slate-800">${d.id}</td>
                         <td class="p-3">
                             <span class="text-[9px] font-black uppercase text-blue-600 block">${d.fornecedor}</span>
-                            <span class="text-[8px] text-slate-400 uppercase">GUIA: ${d.guia}</span>
+                            <span class="text-[8px] text-emerald-600 uppercase font-bold">GAMIL: ${d.guia_gamil}</span>
                         </td>
                         <td class="p-3 font-bold text-center text-blue-700">${d.peso}kg</td>
                         <td class="p-3 text-center">
-                            <button onclick="apagarLote('${d.id}')" class="text-rose-500 text-[9px] font-bold uppercase hover:scale-110 transition-transform">Del</button>
+                            <button onclick="apagarLote('${d.id}')" class="text-rose-500 text-[9px] font-bold uppercase hover:scale-110 transition-all">Del</button>
                         </td>
                     </tr>`;
 
-                // Cards da Aba 3 (Picagem)
                 if(d.status === 'estoque' || (d.status === 'consumido' && isToday(d.data_picagem))) {
                     listaPicagem.innerHTML += `
                         <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
                             <div>
-                                <span class="block font-black text-slate-800 text-sm">${d.id} <small class="text-slate-400 font-normal">(${d.peso}kg)</small></span>
-                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">${d.fornecedor} | GUIA: ${d.guia}</span>
+                                <span class="block font-black text-slate-800 text-sm">${d.id} (${d.peso}kg)</span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">${d.fornecedor} | GAMIL: ${d.guia_gamil}</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 ${d.status === 'estoque' 
-                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase shadow-md active:scale-95 transition-all">Picar</button>`
+                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase shadow-md">Picar</button>`
                                     : `<div class="text-right">
-                                        <span class="text-emerald-600 font-black text-[10px] uppercase italic tracking-tighter">Lote Registado</span>
+                                        <span class="text-emerald-600 font-black text-[10px] uppercase italic">Registado</span>
                                         <button onclick="reverterPicagem('${d.id}')" class="block text-rose-500 text-[9px] underline font-bold mt-1">Reverter</button>
                                        </div>`
                                 }
@@ -314,13 +321,11 @@
                         </div>`;
                 }
             });
-
             document.getElementById('display-ton').innerText = (pesoTotalEstoque / 1000).toFixed(3) + " t";
         });
 
-        // --- SEGURANÇA E EDIÇÃO ---
         async function apagarCarga(id) {
-            const senha = prompt("Atenção: Apagar a carga não remove os lotes já inseridos. Digite a senha:");
+            const senha = prompt("Digite a senha para FECHAR/APAGAR esta carga:");
             if(senha === SENHA_MESTRA) {
                 await cargasRef.doc(id).delete();
             } else {
@@ -329,7 +334,7 @@
         }
 
         async function apagarLote(id) {
-            const senha = prompt("Senha de segurança para APAGAR Lote:");
+            const senha = prompt("Senha de segurança para APAGAR este Lote:");
             if(senha === SENHA_MESTRA) {
                 await lotesRef.doc(id).delete();
             } else {
@@ -338,7 +343,7 @@
         }
 
         async function reverterPicagem(id) {
-            const senha = prompt("Senha para REVERTER picagem:");
+            const senha = prompt("Senha para REVERTER este lote para o stock:");
             if(senha === SENHA_MESTRA) {
                 await lotesRef.doc(id).update({ data_picagem: null, status: 'estoque' });
             } else {
@@ -358,18 +363,16 @@
             return new Date(dateStr).toDateString() === new Date().toDateString();
         }
 
-        // --- HISTÓRICO E RELATÓRIOS ---
         function renderizarHistorico() {
             const container = document.getElementById('resumo-diario');
             container.innerHTML = "";
             const resumo = {};
-
+            
             todosOsLotes.forEach(l => {
                 const dia = l.data_entrada.split('T')[0];
-                const chave = `${dia}|${l.fornecedor}|${l.guia}`;
-                
+                const chave = `${dia}|${l.fornecedor}|${l.guia_gamil}`;
                 if(!resumo[chave]) {
-                    resumo[chave] = { qtd: 0, peso: 0, dia, fornecedor: l.fornecedor, guia: l.guia };
+                    resumo[chave] = { qtd: 0, peso: 0, dia, fornecedor: l.fornecedor, guia: l.guia_gamil };
                 }
                 resumo[chave].qtd++;
                 resumo[chave].peso += l.peso;
@@ -379,14 +382,13 @@
                 const r = resumo[chave];
                 container.innerHTML += `
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between border-b pb-2 mb-2">
-                            <span class="font-black text-slate-700 text-xs italic">${new Date(r.dia).toLocaleDateString()}</span>
-                            <span class="text-[10px] font-bold text-slate-400">GUIA: ${r.guia}</span>
+                        <div class="flex justify-between border-b pb-2 mb-2 text-[10px] font-bold text-slate-400">
+                            <span>${new Date(r.dia).toLocaleDateString()}</span><span>GUIA GAMIL: ${r.guia}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <div>
-                                <span class="block text-xs font-black text-blue-600 uppercase tracking-tighter">${r.fornecedor}</span>
-                                <span class="text-[9px] font-bold text-slate-500">${r.qtd} LOTES NESTA CARGA</span>
+                                <span class="block text-xs font-black text-blue-600 uppercase">${r.fornecedor}</span>
+                                <span class="text-[9px] font-bold text-slate-500">${r.qtd} LOTES NESSA CARGA</span>
                             </div>
                             <span class="text-xl font-black text-slate-800">${(r.peso/1000).toFixed(3)}t</span>
                         </div>
@@ -399,42 +401,39 @@
             const doc = new jsPDF('l', 'mm', 'a4');
             const inicio = document.getElementById('filtro-inicio').value;
             const fim = document.getElementById('filtro-fim').value;
-
-            const dadosFiltrados = todosOsLotes.filter(l => {
-                const data = l.data_entrada.split('T')[0];
-                return (!inicio || data >= inicio) && (!fim || data <= fim);
+            
+            const dados = todosOsLotes.filter(l => {
+                const d = l.data_entrada.split('T')[0];
+                return (!inicio || d >= inicio) && (!fim || d <= fim);
             });
 
             doc.setFontSize(16);
-            doc.text("GAMIL - RELATÓRIO DE ZINCO (POR CARGA/LOTE)", 14, 20);
+            doc.text("GAMIL - RELATÓRIO DE ZINCO v4.1 (LOGÍSTICA COMPLETA)", 14, 20);
             
-            const rows = dadosFiltrados.reverse().map((l, index) => [
-                index + 1,
-                l.id,
-                l.fornecedor,
-                l.caminhao,
-                l.guia,
-                l.peso + "kg",
-                new Date(l.data_entrada).toLocaleString(),
+            const rows = dados.reverse().map((l, i) => [
+                i + 1, 
+                l.id, 
+                l.fornecedor, 
+                l.guia_fornecedor, 
+                l.guia_gamil, 
+                l.peso + "kg", 
+                new Date(l.data_entrada).toLocaleString(), 
                 l.status.toUpperCase()
             ]);
 
-            doc.autoTable({
-                head: [['Nº', 'Lote ID', 'Fornecedor', 'Caminhão', 'Guia Nº', 'Peso', 'Data Entrada', 'Status']],
-                body: rows,
-                startY: 35,
-                headStyles: { fillColor: [15, 23, 42] }
+            doc.autoTable({ 
+                head: [['Nº', 'ID Lote', 'Fornecedor', 'Guia Forn.', 'Guia Gamil', 'Peso', 'Data Entrada', 'Status']], 
+                body: rows, 
+                startY: 35, 
+                headStyles: { fillColor: [15, 23, 42] } 
             });
-
-            doc.save(`relatorio_gamil_zinco_v4.pdf`);
+            doc.save(`relatorio_gamil_zinco_v4.1_full.pdf`);
         }
 
-        // Relógio do cabeçalho
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleString('pt-PT');
         }, 1000);
 
-        // Evento do Scanner PDA
         document.getElementById('pda-scan').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const id = e.target.value.trim().toUpperCase();
