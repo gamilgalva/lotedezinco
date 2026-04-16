@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Controle de Entrada e Picagem de Zincol</title>
+    <title>Gamil | Zinco v4.9 Logistics Master Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -83,7 +83,7 @@
             <div class="flex items-center gap-4">
                 <img src="logo.png" alt="Logo" class="h-10 object-contain bg-white rounded p-1">
                 <div>
-                    <h1 class="text-xl font-black text-blue-400 uppercase tracking-tighter leading-none">Gamil <span class="text-white">Controle de Zinco</span></h1>
+                    <h1 class="text-xl font-black text-blue-400 uppercase tracking-tighter leading-none">Gamil <span class="text-white">Logistics</span></h1>
                     <span id="logged-user-display" class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest italic">Sessão</span>
                 </div>
             </div>
@@ -93,7 +93,7 @@
                     <span id="display-lotes-total" class="text-sm font-black text-blue-400">0</span>
                 </div>
                 <div class="bg-slate-800 px-3 py-1 rounded-xl border border-slate-700 text-center">
-                    <span class="block text-[7px] uppercase font-black text-slate-400">Stock</span>
+                    <span class="block text-[7px] uppercase font-black text-slate-400">Stock Total</span>
                     <span id="display-ton" class="text-sm font-black text-emerald-400">0.000 t</span>
                 </div>
                 <button onclick="location.reload()" class="bg-slate-700 p-2 rounded-xl text-[9px] font-black uppercase">Sair</button>
@@ -125,7 +125,7 @@
                     <input type="date" id="c-data-chegada" class="p-3 bg-blue-50 border rounded-xl font-bold text-xs outline-none">
                 </div>
                 <div class="flex gap-2">
-                    <button id="btn-salvar-carga" onclick="salvarCarga()" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl uppercase hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">Abrir Recebimento</button>
+                    <button id="btn-salvar-carga" onclick="salvarCarga()" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl uppercase hover:bg-blue-700 shadow-lg">Abrir Recebimento</button>
                     <button id="btn-update-carga" onclick="confirmarEdicaoCarga()" class="hidden flex-1 bg-emerald-600 text-white font-black py-4 rounded-xl uppercase">Atualizar Dados</button>
                     <button id="btn-cancel-carga" onclick="cancelarEdicaoCarga()" class="hidden flex-1 bg-slate-400 text-white font-black py-4 rounded-xl uppercase">Cancelar</button>
                 </div>
@@ -185,61 +185,29 @@
     </main>
 
     <script>
-       <script>
-    // --- CONFIGURAÇÃO DE ACESSOS INDIVIDUAIS ---
-    const ACESSOS = {
-        "Hamilton Junior": "hamilton2026",
-        "José Pedro":      "jose2026",
-        "Carlos Meira":    "gamil2026",
-        "Produção":        "producao2026"
-    };
+        // --- CONFIGURAÇÃO DE ACESSOS ---
+        const ACESSOS = {
+            "Hamilton Junior": "hamilton2026",
+            "José Pedro":      "jose2026",
+            "Carlos Meira":    "gamil2026",
+            "Produção":        "producao2026"
+        };
 
-    // Senha usada para as funções de EDIT e DEL nas tabelas
-    const SENHA_MESTRA = "gamil2026"; 
+        const SENHA_MESTRA = "gamil2026"; 
 
-    let ID_CARGA_EDIT = null;
-    let ID_LOTE_EDIT = null;
+        let ID_CARGA_EDIT = null;
+        let ID_LOTE_EDIT = null;
 
-    // --- FUNÇÃO DE LOGIN ATUALIZADA ---
-    function realizarLogin() {
-        const user = document.getElementById('user-select').value;
-        const pass = document.getElementById('user-pass').value;
+        document.getElementById('c-data-chegada').valueAsDate = new Date();
 
-        if(!user) return alert("Selecione um utilizador!");
-        
-        // Verifica se a senha digitada bate com a senha do usuário escolhido
-        if(pass !== ACESSOS[user]) {
-            return alert("Senha incorreta para este utilizador!");
-        }
-
-        document.getElementById('login-overlay').classList.add('hidden');
-        document.getElementById('logged-user-display').innerText = `${user}`;
-
-        if(user === "Produção") {
-            // Remove acessos para produção
-            document.getElementById('tab-cargas').remove();
-            document.getElementById('tab-entrada').remove();
-            document.getElementById('tab-status').remove();
-            document.getElementById('sec-cargas').remove();
-            document.getElementById('sec-entrada').remove();
-            document.getElementById('sec-status').remove();
-            switchTab('picagem');
-        } else {
-            switchTab('cargas');
-        }
-    }
-
-    // Inicializa data
-    document.getElementById('c-data-chegada').valueAsDate = new Date();
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
-        authDomain: "lotezinco.firebaseapp.com",
-        projectId: "lotezinco",
-        storageBucket: "lotezinco.firebasestorage.app",
-        messagingSenderId: "797490873231",
-        appId: "1:797490873231:web:a0bd5cef82b5389ad01fa"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
+            authDomain: "lotezinco.firebaseapp.com",
+            projectId: "lotezinco",
+            storageBucket: "lotezinco.firebasestorage.app",
+            messagingSenderId: "797490873231",
+            appId: "1:797490873231:web:a0bd5cef82b5389ad01fa"
+        };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -249,27 +217,23 @@
         let cargasLocais = [];
         let todosOsLotes = [];
 
-        // LÓGICA DE ACESSO BLOQUEADA (CORREÇÃO v4.8)
+        // LOGIN COM BLOQUEIO DE ABAS (v4.9)
         function realizarLogin() {
             const user = document.getElementById('user-select').value;
             const pass = document.getElementById('user-pass').value;
 
-            if(!user || pass !== SENHA_MESTRA) return alert("Acesso Negado!");
+            if(!user || pass !== ACESSOS[user]) return alert("Acesso Negado ou Senha Incorreta!");
 
             document.getElementById('login-overlay').classList.add('hidden');
             document.getElementById('logged-user-display').innerText = `${user}`;
 
             if(user === "Produção") {
-                // Remove os botões do menu permanentemente para esta sessão
                 document.getElementById('tab-cargas').remove();
                 document.getElementById('tab-entrada').remove();
                 document.getElementById('tab-status').remove();
-                
-                // Remove as seções de código para evitar inspeção e acesso indevido
                 document.getElementById('sec-cargas').remove();
                 document.getElementById('sec-entrada').remove();
                 document.getElementById('sec-status').remove();
-
                 switchTab('picagem');
             } else {
                 switchTab('cargas');
@@ -313,7 +277,7 @@
         }
 
         function editarCarga(id) {
-            if(prompt("Senha:") !== SENHA_MESTRA) return alert("Erro!");
+            if(prompt("Senha de Segurança:") !== SENHA_MESTRA) return alert("Erro!");
             const c = cargasLocais.find(x => x.id === id);
             ID_CARGA_EDIT = id;
             document.getElementById('c-fornecedor').value = c.fornecedor;
@@ -358,8 +322,8 @@
                         <div class="p-4 bg-white rounded-xl shadow-sm border border-slate-200 card-active flex justify-between items-center transition-all">
                             <div>
                                 <span class="block text-blue-600 font-black text-xs uppercase">${c.fornecedor}</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Caminhão: ${c.caminhao} | Chegada: ${new Date(c.data_chegada).toLocaleDateString()}</span>
-                                <span class="block text-[10px] font-black text-emerald-600 uppercase">Declarado: ${c.toneladas_declaradas.toFixed(3)}t</span>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter italic">Caminhão: ${c.caminhao} | Chegada: ${new Date(c.data_chegada).toLocaleDateString()}</span>
+                                <span class="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Toneladas: ${c.toneladas_declaradas.toFixed(3)}t | Registo: ${new Date(c.ts).toLocaleTimeString()}</span>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="editarCarga('${c.id}')" class="text-blue-500 font-bold text-[9px] uppercase px-2 py-1 bg-slate-50 rounded">Edit</button>
@@ -376,7 +340,7 @@
             const lid = document.getElementById('in-lote').value.trim().toUpperCase();
             const peso = document.getElementById('in-peso').value;
             const ggamil = document.getElementById('in-guia-gamil').value.trim().toUpperCase();
-            if(!cid || !lid || !peso) return alert("Preencha os campos!");
+            if(!cid || !lid || !peso) return alert("Preencha os campos obrigatórios!");
             if(todosOsLotes.find(x => x.id === lid)) return alert("Lote Duplicado!");
             const carga = cargasLocais.find(x => x.id === cid);
             const dF = new Date(carga.data_chegada); const ag = new Date();
@@ -386,7 +350,7 @@
         }
 
         function editarLote(id) {
-            if(prompt("Senha:") !== SENHA_MESTRA) return;
+            if(prompt("Senha de Segurança:") !== SENHA_MESTRA) return;
             const l = todosOsLotes.find(x => x.id === id);
             ID_LOTE_EDIT = id;
             document.getElementById('select-carga-ativa').value = l.carga_id;
@@ -423,7 +387,7 @@
                         <tr>
                             <td class="p-3 font-black">${d.id}</td>
                             <td class="p-3 text-[10px] text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td>
-                            <td class="p-3 font-bold text-emerald-600">${d.guia_gamil}</td>
+                            <td class="p-3 font-bold text-emerald-600 uppercase">${d.guia_gamil || '---'}</td>
                             <td class="p-3 font-bold text-center text-blue-700">${d.peso}kg</td>
                             <td class="p-3 text-center flex gap-1 justify-center">
                                 <button onclick="editarLote('${d.id}')" class="text-blue-500 font-bold text-[9px] uppercase px-1 py-1 bg-slate-50 rounded">Edit</button>
@@ -445,10 +409,10 @@
             document.getElementById('display-lotes-total').innerText = lT;
         });
 
-        async function apagarCarga(id) { if(prompt("Senha:") === SENHA_MESTRA) await cargasRef.doc(id).delete(); }
-        async function apagarLote(id) { if(prompt("Senha:") === SENHA_MESTRA) await lotesRef.doc(id).delete(); }
+        async function apagarCarga(id) { if(prompt("Senha de Segurança:") === SENHA_MESTRA) await cargasRef.doc(id).delete(); }
+        async function apagarLote(id) { if(prompt("Senha de Segurança:") === SENHA_MESTRA) await lotesRef.doc(id).delete(); }
         async function picarLote(id) { await lotesRef.doc(id).update({ data_picagem: new Date().toISOString(), status: 'consumido' }); }
-        async function reverterPicagem(id) { if(prompt("Senha:") === SENHA_MESTRA) await lotesRef.doc(id).update({ data_picagem: null, status: 'estoque' }); }
+        async function reverterPicagem(id) { if(prompt("Senha de Segurança:") === SENHA_MESTRA) await lotesRef.doc(id).update({ data_picagem: null, status: 'estoque' }); }
         function isToday(dateStr) { return dateStr && new Date(dateStr).toDateString() === new Date().toDateString(); }
 
         function renderizarHistorico() {
@@ -475,7 +439,7 @@
             doc.setFontSize(16); doc.text("GAMIL - RELATÓRIO DE ZINCO Master", 14, 20);
             const rows = dados.reverse().map((l, i) => [i + 1, l.id, l.fornecedor, l.guia_gamil, l.peso + "kg", new Date(l.data_entrada).toLocaleString(), l.status.toUpperCase()]);
             doc.autoTable({ head: [['Nº', 'Lote', 'Fornecedor', 'Guia Gamil', 'Peso', 'Entrada', 'Status']], body: rows, startY: 35, headStyles: { fillColor: [15, 23, 42] } });
-            doc.save(`relatorio_gamil_v4.8.pdf`);
+            doc.save(`relatorio_gamil_v4.9.pdf`);
         }
 
         setInterval(() => { 
