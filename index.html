@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamil | Zinco v4.2 Logistics Master</title>
+    <title>Gamil | Zinco v4.3 Logistics Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -76,43 +76,38 @@
 
         <section id="sec-cargas" class="space-y-4">
             <div id="form-carga" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 transition-all">
-                <h3 class="text-xs font-black mb-4 uppercase text-slate-500 tracking-widest italic">Dados do Caminhão / Guia de Origem</h3>
+                <h3 class="text-xs font-black mb-4 uppercase text-slate-500 tracking-widest italic">Registo de Chegada do Caminhão</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     <input type="text" id="c-fornecedor" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="FORNECEDOR">
                     <input type="text" id="c-caminhao" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="PLACA CAMINHÃO">
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                     <input type="text" id="c-guia" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="GUIA FORNECEDOR">
-                    <input type="number" step="0.001" id="c-toneladas" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="TONELADAS DECLARADAS">
+                    <input type="number" step="0.001" id="c-toneladas" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none" placeholder="TONS PREVISTAS">
+                    <input type="date" id="c-data-chegada" class="p-3 bg-blue-50 border rounded-xl font-bold text-xs outline-none">
                 </div>
                 <div class="flex gap-2">
                     <button id="btn-salvar-carga" onclick="salvarCarga()" class="flex-1 bg-blue-600 text-white font-black py-3 rounded-xl uppercase hover:bg-blue-700 transition-all">Abrir Recebimento</button>
-                    <button id="btn-update-carga" onclick="confirmarEdicaoCarga()" class="hidden flex-1 bg-emerald-600 text-white font-black py-3 rounded-xl uppercase shadow-lg">Atualizar Carga</button>
-                    <button id="btn-cancel-carga" onclick="cancelarEdicaoCarga()" class="hidden flex-1 bg-slate-400 text-white font-black py-3 rounded-xl uppercase shadow-lg">Cancelar</button>
+                    <button id="btn-update-carga" onclick="confirmarEdicaoCarga()" class="hidden flex-1 bg-emerald-600 text-white font-black py-3 rounded-xl uppercase">Atualizar Dados</button>
+                    <button id="btn-cancel-carga" onclick="cancelarEdicaoCarga()" class="hidden flex-1 bg-slate-400 text-white font-black py-3 rounded-xl uppercase">Sair</button>
                 </div>
             </div>
 
-            <h4 class="text-[10px] font-black uppercase text-slate-400 mt-6 mb-2 tracking-widest">Cargas em Aberto</h4>
             <div id="lista-cargas-abertas" class="space-y-3"></div>
         </section>
 
         <section id="sec-entrada" class="hidden space-y-4">
             <div id="card-lotes" class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
                 <div class="mb-4">
-                    <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Carga / Caminhão Ativo</label>
-                    <select id="select-carga-ativa" class="w-full p-3 bg-blue-50 border-2 border-blue-200 rounded-xl font-bold text-blue-900 outline-none">
-                        <option value="">-- SELECIONE O FORNECEDOR / GUIA --</option>
-                    </select>
+                    <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Vincular Lotes à Carga:</label>
+                    <select id="select-carga-ativa" class="w-full p-3 bg-blue-50 border-2 border-blue-200 rounded-xl font-bold text-blue-900 outline-none"></select>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                     <input type="text" id="in-lote" class="p-3 bg-slate-50 border rounded-xl font-bold uppercase outline-none focus:ring-2 ring-blue-500" placeholder="ID LOTE">
                     <input type="number" id="in-peso" class="p-3 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 ring-blue-500" placeholder="PESO (KG)">
+                    <input type="text" id="in-guia-gamil" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl font-bold uppercase outline-none" placeholder="GUIA GAMIL">
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                    <input type="text" id="in-guia-gamil" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl font-bold uppercase outline-none" placeholder="Nº GUIA GAMIL">
-                    <input type="date" id="in-data-manual" class="p-3 bg-slate-50 border rounded-xl font-bold text-xs outline-none">
-                </div>
-                <button onclick="salvarLote()" class="w-full bg-blue-600 text-white font-bold rounded-xl py-3 uppercase hover:bg-blue-700 shadow-xl transition-all">Lançar Lote no Stock</button>
+                <button onclick="salvarLote()" class="w-full bg-blue-600 text-white font-bold rounded-xl py-3 uppercase hover:bg-blue-700 shadow-xl transition-all">Registar Lote no Stock</button>
             </div>
 
             <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200">
@@ -120,7 +115,7 @@
                     <thead class="bg-slate-50 border-b">
                         <tr>
                             <th class="p-3 font-bold text-slate-400 uppercase">Lote</th>
-                            <th class="p-3 font-bold text-slate-400 uppercase">Data / Hora Entrada</th>
+                            <th class="p-3 font-bold text-slate-400 uppercase">Data/Hora (Carga)</th>
                             <th class="p-3 font-bold text-slate-400 uppercase text-center">Peso</th>
                             <th class="p-3 text-center font-bold text-slate-400 uppercase">Ações</th>
                         </tr>
@@ -144,7 +139,7 @@
                     <input type="date" id="filtro-inicio" class="p-3 border rounded-xl bg-slate-50 font-bold outline-none">
                     <input type="date" id="filtro-fim" class="p-3 border rounded-xl bg-slate-50 font-bold outline-none">
                 </div>
-                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase shadow-xl hover:bg-black transition-all">📄 Exportar Relatório PDF Numerado</button>
+                <button onclick="gerarPDF()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase">📄 Exportar Relatório PDF</button>
             </div>
             <div id="resumo-diario" class="space-y-4"></div>
         </section>
@@ -155,10 +150,8 @@
         const SENHA_MESTRA = "gamil2026";
         let ID_CARGA_EDIT = null;
 
-        // Inicializa data atual
-        document.getElementById('in-data-manual').valueAsDate = new Date();
+        document.getElementById('c-data-chegada').valueAsDate = new Date();
 
-        // Configuração Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBfd_E9LHXpng0nAtG4-A9GrjGHCo049oM",
             authDomain: "lotezinco.firebaseapp.com",
@@ -176,7 +169,6 @@
         let cargasLocais = [];
         let todosOsLotes = [];
 
-        // Controle de Abas
         function switchTab(tab) {
             const abas = ['cargas', 'entrada', 'picagem', 'status'];
             abas.forEach(t => {
@@ -185,78 +177,58 @@
             });
             document.getElementById(`sec-${tab}`).classList.remove('hidden');
             document.getElementById(`tab-${tab}`).className = 'px-6 py-4 text-xs font-bold uppercase tracking-widest tab-active';
-            
             if(tab === 'picagem') setTimeout(() => document.getElementById('pda-scan').focus(), 200);
             if(tab === 'status') renderizarHistorico();
         }
 
-        // --- GESTÃO DE CARGAS ---
         async function salvarCarga() {
-            const fornecedor = document.getElementById('c-fornecedor').value.trim().toUpperCase();
-            const caminhao = document.getElementById('c-caminhao').value.trim().toUpperCase();
+            const forn = document.getElementById('c-fornecedor').value.trim().toUpperCase();
+            const cam = document.getElementById('c-caminhao').value.trim().toUpperCase();
             const guia = document.getElementById('c-guia').value.trim().toUpperCase();
-            const toneladas = document.getElementById('c-toneladas').value || 0;
+            const tons = document.getElementById('c-toneladas').value || 0;
+            const data = document.getElementById('c-data-chegada').value;
 
-            if(!fornecedor || !caminhao || !guia) {
-                alert("Preencha todos os dados obrigatórios da carga!");
-                return;
-            }
+            if(!forn || !cam || !guia || !data) return alert("Preencha todos os campos!");
 
-            const cargaId = `CARGA-${Date.now()}`;
-            await cargasRef.doc(cargaId).set({
-                id: cargaId,
-                fornecedor: fornecedor,
-                caminhao: caminhao,
-                guia: guia,
-                toneladas_declaradas: parseFloat(toneladas),
-                status: 'aberta',
-                ts: Date.now(),
-                data_chegada: new Date().toISOString()
+            const cid = `CARGA-${Date.now()}`;
+            await cargasRef.doc(cid).set({
+                id: cid, fornecedor: forn, caminhao: cam, guia: guia,
+                toneladas_declaradas: parseFloat(tons), status: 'aberta', 
+                ts: Date.now(), data_chegada: data 
             });
-
             limparFormCarga();
         }
 
         function editarCarga(id) {
-            const pass = prompt("Senha de segurança para EDITAR CARGA:");
-            if(pass !== SENHA_MESTRA) {
-                alert("Acesso negado!");
-                return;
-            }
-
+            const pass = prompt("Senha:");
+            if(pass !== SENHA_MESTRA) return;
             const c = cargasLocais.find(x => x.id === id);
-            if(!c) return;
-
             ID_CARGA_EDIT = id;
             document.getElementById('c-fornecedor').value = c.fornecedor;
             document.getElementById('c-caminhao').value = c.caminhao;
             document.getElementById('c-guia').value = c.guia;
             document.getElementById('c-toneladas').value = c.toneladas_declaradas;
+            document.getElementById('c-data-chegada').value = c.data_chegada;
             
             document.getElementById('btn-salvar-carga').classList.add('hidden');
             document.getElementById('btn-update-carga').classList.remove('hidden');
             document.getElementById('btn-cancel-carga').classList.remove('hidden');
             document.getElementById('form-carga').classList.add('edit-mode');
-            window.scrollTo(0,0);
         }
 
         async function confirmarEdicaoCarga() {
-            if(!ID_CARGA_EDIT) return;
-
             await cargasRef.doc(ID_CARGA_EDIT).update({
-                fornecedor: document.getElementById('c-fornecedor').value.trim().toUpperCase(),
-                caminhao: document.getElementById('c-caminhao').value.trim().toUpperCase(),
-                guia: document.getElementById('c-guia').value.trim().toUpperCase(),
-                toneladas_declaradas: parseFloat(document.getElementById('c-toneladas').value || 0)
+                fornecedor: document.getElementById('c-fornecedor').value.toUpperCase(),
+                caminhao: document.getElementById('c-caminhao').value.toUpperCase(),
+                guia: document.getElementById('c-guia').value.toUpperCase(),
+                toneladas_declaradas: parseFloat(document.getElementById('c-toneladas').value),
+                data_chegada: document.getElementById('c-data-chegada').value
             });
-
             cancelarEdicaoCarga();
-            alert("Carga atualizada com sucesso!");
         }
 
         function cancelarEdicaoCarga() {
-            ID_CARGA_EDIT = null;
-            limparFormCarga();
+            ID_CARGA_EDIT = null; limparFormCarga();
             document.getElementById('btn-salvar-carga').classList.remove('hidden');
             document.getElementById('btn-update-carga').classList.add('hidden');
             document.getElementById('btn-cancel-carga').classList.add('hidden');
@@ -268,259 +240,121 @@
             document.getElementById('c-caminhao').value = "";
             document.getElementById('c-guia').value = "";
             document.getElementById('c-toneladas').value = "";
+            document.getElementById('c-data-chegada').valueAsDate = new Date();
         }
 
         cargasRef.orderBy('ts', 'desc').onSnapshot(snap => {
             cargasLocais = [];
             const list = document.getElementById('lista-cargas-abertas');
-            const select = document.getElementById('select-carga-ativa');
-            
-            list.innerHTML = "";
-            select.innerHTML = '<option value="">-- SELECIONE O FORNECEDOR / GUIA --</option>';
-
+            const sel = document.getElementById('select-carga-ativa');
+            list.innerHTML = ""; sel.innerHTML = '<option value="">-- SELECIONE O FORNECEDOR / GUIA --</option>';
             snap.forEach(doc => {
                 const c = doc.data();
                 if(c.status === 'aberta') {
                     cargasLocais.push(c);
-                    select.innerHTML += `<option value="${c.id}">${c.fornecedor} | GUIA: ${c.guia} (${c.caminhao})</option>`;
-                    
+                    sel.innerHTML += `<option value="${c.id}">${c.fornecedor} | GUIA: ${c.guia}</option>`;
                     list.innerHTML += `
                         <div class="p-4 bg-white rounded-xl shadow-sm border border-slate-200 card-active flex justify-between items-center">
                             <div>
                                 <span class="block text-blue-600 font-black text-xs uppercase">${c.fornecedor}</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Placa: ${c.caminhao} | Guia: ${c.guia} | Prev: ${c.toneladas_declaradas}t</span>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Caminhão: ${c.caminhao} | Chegada: ${new Date(c.data_chegada).toLocaleDateString()}</span>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="editarCarga('${c.id}')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded font-bold text-[9px] uppercase hover:bg-blue-600 hover:text-white transition-all">Edit</button>
-                                <button onclick="apagarCarga('${c.id}')" class="bg-rose-50 text-rose-600 px-3 py-1 rounded font-bold text-[9px] uppercase hover:bg-rose-600 hover:text-white transition-all">Del</button>
+                                <button onclick="editarCarga('${c.id}')" class="text-blue-500 font-bold text-[9px] uppercase">Edit</button>
+                                <button onclick="apagarCarga('${c.id}')" class="text-rose-500 font-bold text-[9px] uppercase">Del</button>
                             </div>
                         </div>`;
                 }
             });
         });
 
-        // --- GESTÃO DE LOTES ---
         async function salvarLote() {
-            const cargaId = document.getElementById('select-carga-ativa').value;
-            const loteId = document.getElementById('in-lote').value.trim().toUpperCase();
+            const cid = document.getElementById('select-carga-ativa').value;
+            const lid = document.getElementById('in-lote').value.trim().toUpperCase();
             const peso = document.getElementById('in-peso').value;
-            const guiaGamil = document.getElementById('in-guia-gamil').value.trim().toUpperCase();
-            const dataManual = document.getElementById('in-data-manual').value;
+            const ggamil = document.getElementById('in-guia-gamil').value.trim().toUpperCase();
 
-            if(!cargaId || !loteId || !peso || !guiaGamil) {
-                alert("Preencha todos os campos do lote!");
-                return;
-            }
+            if(!cid || !lid || !peso || !ggamil) return alert("Campos incompletos!");
+            if(todosOsLotes.find(x => x.id === lid)) return alert("Lote duplicado!");
 
-            if(todosOsLotes.find(x => x.id === loteId)) {
-                alert("Lote duplicado no stock!");
-                return;
-            }
-
-            const carga = cargasLocais.find(x => x.id === cargaId);
-            const dataFinal = new Date(dataManual);
+            const carga = cargasLocais.find(x => x.id === cid);
+            
+            // HERDA A DATA DA CARGA + HORA ATUAL
+            const dataFinal = new Date(carga.data_chegada);
             const agora = new Date();
             dataFinal.setHours(agora.getHours(), agora.getMinutes(), agora.getSeconds());
 
-            await lotesRef.doc(loteId).set({
-                id: loteId,
-                peso: parseFloat(peso),
-                carga_id: cargaId,
-                fornecedor: carga.fornecedor,
-                caminhao: carga.caminhao,
-                guia_fornecedor: carga.guia,
-                guia_gamil: guiaGamil,
-                data_entrada: dataFinal.toISOString(),
-                ts_entrada: dataFinal.getTime(),
-                status: 'estoque',
-                data_picagem: null
+            await lotesRef.doc(lid).set({
+                id: lid, peso: parseFloat(peso), carga_id: cid, fornecedor: carga.fornecedor,
+                caminhao: carga.caminhao, guia_fornecedor: carga.guia, guia_gamil: ggamil,
+                data_entrada: dataFinal.toISOString(), ts_entrada: dataFinal.getTime(), status: 'estoque', data_picagem: null
             });
-
-            document.getElementById('in-lote').value = "";
-            document.getElementById('in-peso').value = "";
+            document.getElementById('in-lote').value = ""; document.getElementById('in-peso').value = "";
         }
 
         lotesRef.orderBy('ts_entrada', 'desc').onSnapshot(snap => {
             todosOsLotes = [];
-            let pesoTotalEstoque = 0;
-            const listaE = document.getElementById('lista-lotes-entrada');
-            const listaP = document.getElementById('lista-picagem');
-            
-            listaE.innerHTML = "";
-            listaP.innerHTML = "";
-
+            let pesoTotal = 0;
+            const listE = document.getElementById('lista-lotes-entrada');
+            const listP = document.getElementById('lista-picagem');
+            listE.innerHTML = ""; listP.innerHTML = "";
             snap.forEach(doc => {
-                const d = doc.data();
-                todosOsLotes.push(d);
-                if(d.status === 'estoque') pesoTotalEstoque += d.peso;
-
-                listaE.innerHTML += `
-                    <tr>
-                        <td class="p-3 font-black text-slate-800">${d.id}</td>
-                        <td class="p-3 text-[10px] text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td>
-                        <td class="p-3 font-bold text-center text-blue-700">${d.peso}kg</td>
-                        <td class="p-3 text-center">
-                            <button onclick="apagarLote('${d.id}')" class="text-rose-500 text-[10px] font-bold hover:scale-110 transition-transform">Del</button>
-                        </td>
-                    </tr>`;
-
+                const d = doc.data(); todosOsLotes.push(d);
+                if(d.status === 'estoque') pesoTotal += d.peso;
+                listE.innerHTML += `<tr><td class="p-3 font-black">${d.id}</td><td class="p-3 text-[10px] text-slate-500">${new Date(d.data_entrada).toLocaleString()}</td><td class="p-3 font-bold text-center text-blue-700">${d.peso}kg</td><td class="p-3 text-center"><button onclick="apagarLote('${d.id}')" class="text-red-500 text-[9px] font-bold">Del</button></td></tr>`;
                 if(d.status === 'estoque' || (d.status === 'consumido' && isToday(d.data_picagem))) {
-                    listaP.innerHTML += `
-                        <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
-                            <div>
-                                <span class="block font-black text-slate-800 text-sm">${d.id} (${d.peso}kg)</span>
-                                <span class="text-[9px] text-slate-400 font-bold uppercase">FORN: ${d.fornecedor} | GAMIL: ${d.guia_gamil}</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                ${d.status === 'estoque' 
-                                    ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase shadow-md">Picar</button>`
-                                    : `<div class="text-right">
-                                        <span class="text-emerald-600 font-black text-[10px] uppercase italic">Registado</span>
-                                        <button onclick="reverterPicagem('${d.id}')" class="block text-rose-500 text-[9px] underline font-bold mt-1">Reverter</button>
-                                       </div>`
-                                }
-                            </div>
-                        </div>`;
+                    listP.innerHTML += `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm"><div><span class="block font-black text-slate-800 text-sm">${d.id} (${d.peso}kg)</span><span class="text-[9px] text-slate-400 font-bold uppercase">GAMIL: ${d.guia_gamil}</span></div><div>${d.status === 'estoque' ? `<button onclick="picarLote('${d.id}')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-lg font-black uppercase shadow-md">Picar</button>` : `<button onclick="reverterPicagem('${d.id}')" class="text-rose-500 text-[9px] font-bold underline">Reverter</button>`}</div></div>`;
                 }
             });
-
-            document.getElementById('display-ton').innerText = (pesoTotalEstoque / 1000).toFixed(3) + " t";
+            document.getElementById('display-ton').innerText = (pesoTotal / 1000).toFixed(3) + " t";
         });
 
-        // --- SEGURANÇA ---
-        async function apagarCarga(id) {
-            const senha = prompt("Senha de segurança para APAGAR CARGA:");
-            if(senha === SENHA_MESTRA) {
-                await cargasRef.doc(id).delete();
-            } else {
-                alert("Senha incorreta!");
-            }
-        }
+        async function apagarCarga(id) { if(prompt("Senha:") === SENHA_MESTRA) await cargasRef.doc(id).delete(); }
+        async function apagarLote(id) { if(prompt("Senha:") === SENHA_MESTRA) await lotesRef.doc(id).delete(); }
+        async function picarLote(id) { await lotesRef.doc(id).update({ data_picagem: new Date().toISOString(), status: 'consumido' }); }
+        async function reverterPicagem(id) { if(prompt("Senha:") === SENHA_MESTRA) await lotesRef.doc(id).update({ data_picagem: null, status: 'estoque' }); }
+        function isToday(dateStr) { return dateStr && new Date(dateStr).toDateString() === new Date().toDateString(); }
 
-        async function apagarLote(id) {
-            const senha = prompt("Senha de segurança para APAGAR Lote:");
-            if(senha === SENHA_MESTRA) {
-                await lotesRef.doc(id).delete();
-            } else {
-                alert("Senha incorreta!");
-            }
-        }
-
-        async function picarLote(id) {
-            await lotesRef.doc(id).update({
-                data_picagem: new Date().toISOString(),
-                status: 'consumido'
-            });
-        }
-
-        async function reverterPicagem(id) {
-            const senha = prompt("Senha para REVERTER este lote:");
-            if(senha === SENHA_MESTRA) {
-                await lotesRef.doc(id).update({ data_picagem: null, status: 'estoque' });
-            } else {
-                alert("Senha incorreta!");
-            }
-        }
-
-        function isToday(dateStr) {
-            if(!dateStr) return false;
-            return new Date(dateStr).toDateString() === new Date().toDateString();
-        }
-
-        // --- HISTÓRICO E PDF ---
         function renderizarHistorico() {
             const container = document.getElementById('resumo-diario');
-            container.innerHTML = "";
-            const resumo = {};
-
+            container.innerHTML = ""; const resumo = {};
             todosOsLotes.forEach(l => {
                 const dia = l.data_entrada.split('T')[0];
                 const chave = `${dia}|${l.fornecedor}|${l.guia_gamil}`;
-                if(!resumo[chave]) {
-                    resumo[chave] = { qtd: 0, peso: 0, dia, fornecedor: l.fornecedor, guia: l.guia_gamil };
-                }
-                resumo[chave].qtd++;
-                resumo[chave].peso += l.peso;
+                if(!resumo[chave]) resumo[chave] = { qtd: 0, peso: 0, dia, fornecedor: l.fornecedor, guia: l.guia_gamil };
+                resumo[chave].qtd++; resumo[chave].peso += l.peso;
             });
-
-            Object.keys(resumo).sort().reverse().forEach(chave => {
-                const r = resumo[chave];
-                container.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between border-b pb-1 mb-2 text-[10px] font-bold text-slate-400">
-                            <span>DATA: ${new Date(r.dia).toLocaleDateString()}</span>
-                            <span>GUIA GAMIL: ${r.guia}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="block text-xs font-black text-blue-600 uppercase tracking-tighter">${r.fornecedor}</span>
-                                <span class="text-[9px] font-bold text-slate-500">${r.qtd} LOTES NESSA CARGA</span>
-                            </div>
-                            <span class="text-xl font-black text-slate-800">${(r.peso/1000).toFixed(3)}t</span>
-                        </div>
-                    </div>`;
+            Object.keys(resumo).sort().reverse().forEach(ch => {
+                const r = resumo[ch];
+                container.innerHTML += `<div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-2"><div class="flex justify-between border-b pb-1 mb-2 text-[10px] font-bold text-slate-400"><span>DATA CARGA: ${new Date(r.dia).toLocaleDateString()}</span><span>GAMIL: ${r.guia}</span></div><div class="flex justify-between items-center"><div><span class="block text-xs font-black text-blue-600 uppercase">${r.fornecedor}</span><span class="text-[9px] font-bold text-slate-500">${r.qtd} LOTES</span></div><span class="text-xl font-black text-slate-800">${(r.peso/1000).toFixed(3)}t</span></div></div>`;
             });
         }
 
         function gerarPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('l', 'mm', 'a4');
             const inicio = document.getElementById('filtro-inicio').value;
             const fim = document.getElementById('filtro-fim').value;
-
-            const dadosFiltrados = todosOsLotes.filter(l => {
-                const d = l.data_entrada.split('T')[0];
-                return (!inicio || d >= inicio) && (!fim || d <= fim);
-            });
-
-            doc.setFontSize(16);
-            doc.text("GAMIL - RELATÓRIO DE ZINCO v4.2 PRO", 14, 20);
-            
-            const rows = dadosFiltrados.reverse().map((l, index) => [
-                index + 1,
-                l.id,
-                l.fornecedor,
-                l.guia_fornecedor,
-                l.guia_gamil,
-                l.peso + "kg",
-                new Date(l.data_entrada).toLocaleString(),
-                l.status.toUpperCase()
-            ]);
-
-            doc.autoTable({
-                head: [['Nº', 'ID Lote', 'Fornecedor', 'Guia Forn.', 'Guia Gamil', 'Peso', 'Data Entrada', 'Status']],
-                body: rows,
-                startY: 35,
-                headStyles: { fillColor: [15, 23, 42] }
-            });
-
-            doc.save(`relatorio_gamil_v4.2_full.pdf`);
+            const dados = todosOsLotes.filter(l => { const d = l.data_entrada.split('T')[0]; return (!inicio || d >= inicio) && (!fim || d <= fim); });
+            doc.setFontSize(16); doc.text("GAMIL - RELATÓRIO DE ZINCO v4.3", 14, 20);
+            const rows = dados.reverse().map((l, i) => [i + 1, l.id, l.fornecedor, l.guia_fornecedor, l.guia_gamil, l.peso + "kg", new Date(l.data_entrada).toLocaleString(), l.status.toUpperCase()]);
+            doc.autoTable({ head: [['Nº', 'Lote', 'Fornecedor', 'Guia Forn.', 'Guia Gamil', 'Peso', 'Data Entrada', 'Status']], body: rows, startY: 35, headStyles: { fillColor: [15, 23, 42] } });
+            doc.save(`relatorio_gamil_v4.3.pdf`);
         }
 
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleString('pt-PT');
-        }, 1000);
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString('pt-PT'); }, 1000);
 
-        // Scanner
         document.getElementById('pda-scan').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const id = e.target.value.trim().toUpperCase();
                 const lote = todosOsLotes.find(l => l.id === id);
-                const feedback = document.getElementById('pda-feedback');
-                
-                feedback.className = "mt-4 p-4 rounded-xl text-center font-bold text-lg block text-white";
-                
+                const f = document.getElementById('pda-feedback');
+                f.className = "mt-4 p-4 rounded-xl text-center font-bold text-lg block text-white";
                 if (lote && lote.status === 'estoque') {
-                    picarLote(id);
-                    feedback.innerText = "✅ REGISTADO: " + id;
-                    feedback.classList.add('bg-emerald-600');
+                    picarLote(id); f.innerText = "✅ REGISTADO: " + id; f.classList.add('bg-emerald-600');
                 } else {
-                    feedback.innerText = lote ? "⚠️ JÁ CONSUMIDO" : "❌ NÃO ENCONTRADO";
-                    feedback.classList.add('bg-rose-600');
+                    f.innerText = lote ? "⚠️ JÁ CONSUMIDO" : "❌ NÃO ENCONTRADO"; f.classList.add('bg-rose-600');
                 }
-                
-                e.target.value = "";
-                setTimeout(() => feedback.classList.add('hidden'), 3000);
+                e.target.value = ""; setTimeout(() => f.classList.add('hidden'), 3000);
             }
         });
     </script>
